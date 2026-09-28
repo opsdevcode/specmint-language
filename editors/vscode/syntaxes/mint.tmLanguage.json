@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Mint",
+  "scopeName": "source.mint",
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#string" },
+    { "include": "#number" },
+    { "include": "#keyword" }
+  ],
+  "repository": {
+    "comment": {
+      "name": "comment.line.double-slash.mint",
+      "match": "//.*$"
+    },
+    "string": {
+      "name": "string.quoted.double.mint",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.mint",
+          "match": "\\\\[\\\\\"n]"
+        }
+      ]
+    },
+    "number": {
+      "name": "constant.numeric.mint",
+      "match": "\\b[0-9]+\\b"
+    },
+    "keyword": {
+      "name": "keyword.other.mint",
+      "match": "\\b(mint|namespace|import|as|extension|const|type|target|automation|owner|intent|use|sandbox|apply|capabilities|evidence|require|authorization|forbid|mutation|status|draft|active|paused|retired|kind|config|v0|v1alpha1)\\b"
+    }
+  }
+}

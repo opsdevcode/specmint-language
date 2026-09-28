@@ -1,0 +1,8 @@
+.vscode-test/**
+.gitignore
+.tool-versions
+eslint.config.js
+jsconfig.json
+scripts/**
+**/*.vsix
+.tsbuildinfo

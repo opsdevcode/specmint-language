@@ -1,0 +1,93 @@
+{
+  "name": "mint-language",
+  "displayName": "Mint Language",
+  "description": "Compiler-backed Mint editor support (offline LSP).",
+  "version": "0.1.0",
+  "publisher": "opsdevcode",
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.85.0",
+    "node": ">=20.18"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/opsdevcode/specmint-language.git"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Mint LSP reads workspace Mint sources through the local compiler."
+    },
+    "virtualWorkspaces": {
+      "supported": false
+    }
+  },
+  "activationEvents": [
+    "onLanguage:mint"
+  ],
+  "main": "./src/extension.js",
+  "scripts": {
+    "lint": "eslint src/extension.js scripts/validate-extension.js",
+    "typecheck": "tsc -p jsconfig.json",
+    "test": "node scripts/validate-extension.js",
+    "validate": "node scripts/validate-extension.js",
+    "package": "vsce package --no-git-tag-version --no-update-package-json"
+  },
+  "contributes": {
+    "configuration": {
+      "title": "Mint",
+      "properties": {
+        "mint.server.path": {
+          "type": "string",
+          "default": "mint",
+          "description": "Executable that serves mint lsp over stdio."
+        },
+        "mint.server.args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "lsp"
+          ],
+          "description": "Arguments passed to the Mint language server. Default is lsp."
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "mint",
+        "aliases": [
+          "Mint"
+        ],
+        "extensions": [
+          ".mint"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "mint",
+        "scopeName": "source.mint",
+        "path": "./syntaxes/mint.tmLanguage.json"
+      }
+    ]
+  },
+  "extensionKind": [
+    "workspace"
+  ],
+  "dependencies": {
+    "vscode-languageclient": "9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.17.19",
+    "@types/vscode": "1.85.0",
+    "@vscode/vsce": "3.2.2",
+    "eslint": "9.21.0",
+    "typescript": "5.7.3"
+  }
+}
