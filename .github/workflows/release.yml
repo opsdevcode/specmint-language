@@ -59,19 +59,11 @@ jobs:
             --title "Mint ${TAG#v}" \
             --notes "Mint language ${TAG}. Offline compiler, CLI, and editor. mint apply is not included." \
             dist/*
-      - name: Publish PyPI
-        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe1288c7f4c4b0c8 # v1.12.4
-        continue-on-error: true
-      - name: Publish VS Code Marketplace
-        if: ${{ secrets.VSCE_PAT != '' }}
-        working-directory: editors/vscode
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx vsce publish --packagePath ../../dist/*.vsix
-        continue-on-error: true
-      - name: Publish Open VSX
-        if: ${{ secrets.OVSX_PAT != '' }}
-        env:
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        run: npx --yes ovsx publish dist/*.vsix --pat "${OVSX_PAT}"
-        continue-on-error: true
+      - name: PyPI trusted publishing
+        run: |
+          echo "Configure pypi.org trusted publisher for specmint → GitHub opsdevcode/specmint-language@release.yml"
+          echo "Then re-enable pypa/gh-action-pypi-publish on this job."
+
+        run: |
+          echo "VS Code Marketplace and Open VSX need VSCE_PAT / OVSX_PAT plus publisher opsdevcode."
+          echo "GitHub Release already attached the VSIX."
