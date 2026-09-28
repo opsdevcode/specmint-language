@@ -1,0 +1,4 @@
+include LICENSE NOTICE README.md CHANGELOG.md SECURITY.md pyproject.toml
+recursive-include schemas *.json
+recursive-include specification *
+recursive-include src *.py
