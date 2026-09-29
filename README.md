@@ -41,6 +41,7 @@ Alpha version: **0.1.0a1** (Git tag `v0.1.0-alpha.1`).
 - [Adapters](specification/mint/v0/adapters.md)
 - [Repository snapshots](specification/mint/v0/repository-snapshot.md)
 - [Conformance](specification/mint/v0/conformance/README.md)
+- [Platform composition](specification/mint/v0/platform-composition.md)
 - GitHub Pages: https://opsdevcode.github.io/specmint-language/
 
 ## VS Code
