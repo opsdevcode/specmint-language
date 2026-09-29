@@ -3,5 +3,5 @@ Copyright 2026 opsdevcode
 
 This product includes software developed by OpsDevCode (https://opsdevco.de).
 
-Mint is the language. SpecMint is a separate private host product and is
-not published from this repository.
+Mint is the language. SpecMint core is published from
+opsdevcode/specmint-platform. The hosted SpecMint service stays private.
