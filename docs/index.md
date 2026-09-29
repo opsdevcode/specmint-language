@@ -14,4 +14,6 @@ and `mint` CLI.
 - [Conformance](../specification/mint/v0/conformance/README.md)
 - [Repository](https://github.com/opsdevcode/specmint-language)
 
-`mint apply` is not part of this extract. SpecMint remains a private host.
+`mint apply` is not part of this extract. SpecMint core is public in
+[specmint-platform](https://github.com/opsdevcode/specmint-platform). The
+hosted service stays private.
