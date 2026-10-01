@@ -56,6 +56,30 @@ class ProjectProfile:
 
 
 @dataclass(frozen=True, slots=True)
+class ProjectIntegration:
+    source: str
+    version: str
+    local: str
+    capabilities: tuple[str, ...]
+    targets: tuple[str, ...]
+    phases: tuple[str, ...]
+    realization: str
+
+
+@dataclass(frozen=True, slots=True)
+class LockedIntegration:
+    identity: str
+    version: str
+    protocol: str
+    manifest_digest: str
+    artifact_digest: str
+    schema_digests: tuple[tuple[str, str], ...]
+    capabilities: tuple[tuple[str, str], ...]
+    target_kinds: tuple[str, ...]
+    phases: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class ProjectManifest:
     schema: str
     name: str
@@ -66,6 +90,7 @@ class ProjectManifest:
     extension_paths: tuple[str, ...]
     profiles: tuple[ProjectProfile, ...]
     directory: Path
+    integrations: tuple[ProjectIntegration, ...] = ()
 
     @property
     def path(self) -> Path:
@@ -95,9 +120,10 @@ class Lockfile:
     catalog_digest: str
     units: tuple[tuple[str, str], ...]
     extensions: tuple[tuple[str, str, str], ...]
+    integrations: tuple[LockedIntegration, ...] = ()
 
     def to_canonical_dict(self) -> dict[str, Any]:
-        return {
+        document: dict[str, Any] = {
             "catalogDigest": self.catalog_digest,
             "edition": self.edition,
             "extensions": [
@@ -110,6 +136,28 @@ class Lockfile:
             "schema": self.schema,
             "units": [{"digest": digest, "path": path} for path, digest in self.units],
         }
+        if self.integrations:
+            document["integrations"] = [
+                {
+                    "artifactDigest": item.artifact_digest,
+                    "capabilities": [
+                        {"id": capability_id, "version": capability_version}
+                        for capability_id, capability_version in item.capabilities
+                    ],
+                    "identity": item.identity,
+                    "manifestDigest": item.manifest_digest,
+                    "phases": list(item.phases),
+                    "protocol": item.protocol,
+                    "schemaDigests": [
+                        {"digest": digest, "identity": identity}
+                        for identity, digest in item.schema_digests
+                    ],
+                    "targetKinds": list(item.target_kinds),
+                    "version": item.version,
+                }
+                for item in self.integrations
+            ]
+        return document
 
     def canonical_bytes(self) -> bytes:
         return canonical_json_bytes(self.to_canonical_dict())
@@ -155,7 +203,17 @@ def load_manifest(path: Path) -> ProjectManifest:
         raise coded_error("MINT_PROJECT", f"fix {path}: {exc}") from exc
     if not isinstance(raw, dict):
         raise coded_error("MINT_PROJECT", f"set {path} to a TOML table")
-    allowed = {"schema", "name", "edition", "root", "units", "catalogs", "extensions", "profiles"}
+    allowed = {
+        "schema",
+        "name",
+        "edition",
+        "root",
+        "units",
+        "catalogs",
+        "extensions",
+        "profiles",
+        "integrations",
+    }
     unknown = sorted(set(raw) - allowed)
     if unknown:
         raise coded_error(
@@ -204,6 +262,7 @@ def load_manifest(path: Path) -> ProjectManifest:
         )
     extension_paths = tuple(_extension_path(item) for item in extensions_raw or [])
     profiles = _load_profiles(raw.get("profiles", {}))
+    integrations = _load_integrations(raw.get("integrations", []))
     return ProjectManifest(
         schema=schema,
         name=name,
@@ -214,6 +273,7 @@ def load_manifest(path: Path) -> ProjectManifest:
         extension_paths=extension_paths,
         profiles=profiles,
         directory=path.parent.resolve(),
+        integrations=integrations,
     )
 
 
@@ -260,6 +320,7 @@ def build_lockfile(manifest: ProjectManifest) -> Lockfile:
         raise MintError(result.diagnostic)
     units = tuple(sorted((unit.unit_id, _digest_text(unit.source)) for unit in program.units))
     extensions = tuple(sorted(_extension_lock_entries(manifest)))
+    integrations = _integration_lock_entries(manifest)
     return Lockfile(
         schema=LOCK_SCHEMA,
         name=manifest.name,
@@ -269,6 +330,7 @@ def build_lockfile(manifest: ProjectManifest) -> Lockfile:
         catalog_digest=catalog_digest(),
         units=units,
         extensions=extensions,
+        integrations=integrations,
     )
 
 
@@ -316,6 +378,7 @@ def load_lockfile(path: Path) -> Lockfile:
                 (str(item["namespace"]), str(item["version"]), str(item["digest"]))
                 for item in extensions_raw or []
             ),
+            integrations=_locked_integrations(document.get("integrations", [])),
         )
     except (KeyError, TypeError) as exc:
         raise coded_error(
@@ -432,6 +495,180 @@ def _load_profiles(raw: object) -> tuple[ProjectProfile, ...]:
         targets = tuple(str(item) for item in targets_raw)
         profiles.append(ProjectProfile(name=str(name), targets=targets))
     return tuple(sorted(profiles, key=lambda item: item.name))
+
+
+def _load_integrations(raw: object) -> tuple[ProjectIntegration, ...]:
+    if raw in (None, []):
+        return ()
+    if not isinstance(raw, list):
+        raise coded_error("MINT_INTEGRATION", "set integrations to an array of tables")
+    items: list[ProjectIntegration] = []
+    for entry in raw:
+        if not isinstance(entry, dict):
+            raise coded_error("MINT_INTEGRATION", "each integration requirement must be a table")
+        allowed = {
+            "source",
+            "version",
+            "local",
+            "capabilities",
+            "targets",
+            "phases",
+            "realization",
+        }
+        unknown = sorted(set(entry) - allowed)
+        if unknown:
+            raise coded_error(
+                "MINT_INTEGRATION",
+                f"remove unknown integration keys {unknown}",
+            )
+        _reject_secret_keys(entry)
+        source = str(entry.get("source", ""))
+        version = str(entry.get("version", ""))
+        local = str(entry.get("local", ""))
+        if local:
+            local = _declared_relative(local, suffix=".json")
+        capabilities = tuple(str(item) for item in entry.get("capabilities", []))
+        targets = tuple(str(item) for item in entry.get("targets", []))
+        phases = tuple(str(item) for item in entry.get("phases", []))
+        if not source or not version or not capabilities or not targets or not phases:
+            raise coded_error(
+                "MINT_INTEGRATION",
+                "integration requirements need source, version, capabilities, targets, and phases",
+            )
+        items.append(
+            ProjectIntegration(
+                source=source,
+                version=version,
+                local=local,
+                capabilities=capabilities,
+                targets=targets,
+                phases=phases,
+                realization=str(entry.get("realization", "")),
+            )
+        )
+    identities = [item.source for item in items]
+    _reject_duplicates(tuple(identities), "integration")
+    return tuple(sorted(items, key=lambda item: item.source))
+
+
+def _integration_lock_entries(manifest: ProjectManifest) -> tuple[LockedIntegration, ...]:
+    if not manifest.integrations:
+        return ()
+    from opsdevcode_specmint.integration.models import parse_manifest
+    from opsdevcode_specmint.integration.reference_server import artifact_digest, manifest_document
+
+    pinned: list[LockedIntegration] = []
+    for requirement in manifest.integrations:
+        if requirement.local:
+            loaded = _contained_file(manifest.directory, requirement.local)
+            text = loaded.read_text(encoding="utf-8")
+            manifest_doc = parse_manifest(json.loads(text)).document
+            artifact_file = manifest.directory / requirement.local
+            artifact_file = artifact_file.parent / "implementation" / "reference_server.py"
+            if artifact_file.is_symlink() or not artifact_file.is_file():
+                raise coded_error(
+                    "MINT_INTEGRATION",
+                    "local integration artifact must be implementation/reference_server.py",
+                )
+            resolved = artifact_file.resolve()
+            try:
+                resolved.relative_to(manifest.directory.resolve())
+            except ValueError:
+                raise coded_error(
+                    "MINT_PATH",
+                    "local integration artifact escapes the project",
+                ) from None
+            pinned_artifact = _digest_bytes(artifact_file.read_bytes())
+        else:
+            if requirement.source != "local.sandbox.ensure_marker":
+                raise coded_error(
+                    "MINT_INTEGRATION",
+                    f"missing local manifest for {requirement.source}; registry deferred",
+                )
+            manifest_doc = manifest_document()
+            pinned_artifact = artifact_digest()
+        identity_ok = manifest_doc["identity"] == requirement.source
+        version_ok = manifest_doc["version"] == requirement.version
+        if not identity_ok or not version_ok:
+            raise coded_error(
+                "MINT_INTEGRATION",
+                f"integration {requirement.source} does not match the required version",
+            )
+        if manifest_doc["artifact"]["digest"] != pinned_artifact:
+            raise coded_error(
+                "MINT_DIGEST",
+                f"artifact digest mismatch for {requirement.source}",
+            )
+        pinned.append(
+            LockedIntegration(
+                identity=str(manifest_doc["identity"]),
+                version=str(manifest_doc["version"]),
+                protocol="mint.protocol/v0",
+                manifest_digest=_digest_bytes(canonical_json_bytes(manifest_doc)),
+                artifact_digest=pinned_artifact,
+                schema_digests=(("mint.integration/v0", _schema_digest()),),
+                capabilities=tuple(
+                    (str(item["id"]), str(item["version"])) for item in manifest_doc["capabilities"]
+                ),
+                target_kinds=tuple(manifest_doc["targetKinds"]),
+                phases=tuple(manifest_doc["phases"]),
+            )
+        )
+    return tuple(pinned)
+
+
+def _schema_digest() -> str:
+    schema_path = (
+        Path(__file__).resolve().parents[1] / "integration" / "schemas" / "mint.integration.v0.json"
+    )
+    return _digest_bytes(schema_path.read_bytes())
+
+
+def _locked_integrations(raw: object) -> tuple[LockedIntegration, ...]:
+    if raw in (None, []):
+        return ()
+    if not isinstance(raw, list):
+        raise coded_error("MINT_LOCK", "mint.lock integrations must be an array")
+    items: list[LockedIntegration] = []
+    for entry in raw:
+        if not isinstance(entry, dict):
+            raise coded_error("MINT_LOCK", "each locked integration must be an object")
+        try:
+            items.append(
+                LockedIntegration(
+                    identity=str(entry["identity"]),
+                    version=str(entry["version"]),
+                    protocol=str(entry["protocol"]),
+                    manifest_digest=str(entry["manifestDigest"]),
+                    artifact_digest=str(entry["artifactDigest"]),
+                    schema_digests=tuple(
+                        (str(item["identity"]), str(item["digest"]))
+                        for item in entry["schemaDigests"]
+                    ),
+                    capabilities=tuple(
+                        (str(item["id"]), str(item["version"])) for item in entry["capabilities"]
+                    ),
+                    target_kinds=tuple(str(item) for item in entry["targetKinds"]),
+                    phases=tuple(str(item) for item in entry["phases"]),
+                )
+            )
+        except (KeyError, TypeError) as exc:
+            raise coded_error(
+                "MINT_LOCK",
+                "locked integration is missing identity, version, or digests",
+            ) from exc
+    return tuple(items)
+
+
+def _reject_secret_keys(raw: dict[str, Any]) -> None:
+    for key in raw:
+        lowered = str(key).lower()
+        secretish = {"pat", "api_key", "authorization"}
+        if lowered in _CREDENTIAL_KEYS or lowered in secretish:
+            raise coded_error(
+                "MINT_PERMISSION",
+                f"remove secret-shaped field {key} from the integration requirement",
+            )
 
 
 def _extension_path(raw: object) -> str:
