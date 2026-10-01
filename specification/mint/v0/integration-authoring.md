@@ -39,4 +39,5 @@ present, are pinned separately. Credentials are not configuration.
 Install the language package and run `mint-local-sandbox` or
 `python -m opsdevcode_specmint.integration`. A hosted registry, signed
 OCI artifacts, and marketplace admission are deferred. `mint integrations
-init <name>` writes a skeleton only.
+init` is deferred until a generator can emit a valid manifest without
+duplicating the reference server.

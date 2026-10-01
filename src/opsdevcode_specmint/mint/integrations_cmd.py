@@ -103,8 +103,6 @@ def run_integrations(args: Any, *, stdout: TextIO, stderr: TextIO) -> int:
         return _resolve(args, stdout=stdout)
     if command == "conformance":
         return _conformance(args, stdout=stdout)
-    if command == "init":
-        return _init(args, stdout=stdout)
     raise coded_error(
         "MINT_INTEGRATION",
         "mint integrations accepts list, inspect, check, resolve, conformance, or init",
@@ -173,52 +171,6 @@ def _conformance(args: Any, *, stdout: TextIO) -> int:
 
 def reference_server_path() -> str:
     return str(Path(__file__).resolve().parents[1] / "integration" / "reference_server.py")
-
-
-def _init(args: Any, *, stdout: TextIO) -> int:
-    name = str(args.name)
-    root = Path(args.directory)
-    target = root / name
-    if target.exists():
-        raise coded_error("MINT_INTEGRATION", f"{target} already exists")
-    implementation = target / "implementation"
-    schemas = target / "schemas"
-    fixtures = target / "fixtures"
-    tests = target / "tests"
-    for directory in (implementation, schemas, fixtures, tests):
-        directory.mkdir(parents=True)
-    schema = {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "additionalProperties": False,
-        "title": name,
-        "type": "object",
-    }
-    config_text = json.dumps(schema, indent=2, sort_keys=True) + "\n"
-    (schemas / "config.json").write_text(config_text, encoding="utf-8")
-    (implementation / "README.md").write_text(
-        "Implement mint.protocol/v0 in a separate process. Do not import the Mint compiler.\n",
-        encoding="utf-8",
-    )
-    (fixtures / "describe.json").write_text("{}\n", encoding="utf-8")
-    (tests / "test_conformance.py").write_text(
-        "def test_placeholder() -> None:\n    assert True\n",
-        encoding="utf-8",
-    )
-    manifest = {
-        "note": "Replace this skeleton with mint.integration/v0 before mint integrations check.",
-        "schema": "mint.integration/v0",
-        "status": "deferred-skeleton",
-    }
-    (target / "mint-integration.json").write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    (target / "README.md").write_text(
-        f"# {name}\n\nSkeleton only. Hosted registry publishing is deferred.\n",
-        encoding="utf-8",
-    )
-    stdout.write(json.dumps({"ok": True, "path": name}, sort_keys=True) + "\n")
-    return 0
 
 
 def reference_realization(target_id: str, target_kind: str) -> dict[str, Any]:
