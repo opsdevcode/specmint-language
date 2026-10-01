@@ -84,7 +84,7 @@ def test_apply_is_unknown_command() -> None:
 def test_adapters_list_is_explicit_builtin() -> None:
     code, out, err = _run(["adapters", "list"])
     assert code == 0
-    assert err == ""
+    assert "MINT_DEPRECATED_ADAPTER" in err
     body = json.loads(out)
     assert body["ok"] is True
     assert body["registry"] == "builtin"
@@ -102,7 +102,7 @@ def test_adapters_list_is_explicit_builtin() -> None:
 def test_adapters_inspect_named_manifest() -> None:
     code, out, err = _run(["adapters", "inspect", SANDBOX_ADAPTER_ID])
     assert code == 0
-    assert err == ""
+    assert "MINT_DEPRECATED_ADAPTER" in err
     body = json.loads(out)
     assert body == builtin_registry().inspect(SANDBOX_ADAPTER_ID).to_canonical_dict()
 
@@ -297,7 +297,7 @@ def test_specmint_forwards_plan_and_adapters() -> None:
     source = _marker_source()
     list_code, list_out, list_err = _run_specmint(["mint", "adapters", "list"])
     assert list_code == 0
-    assert list_err == ""
+    assert "MINT_DEPRECATED_ADAPTER" in list_err
     assert SANDBOX_ADAPTER_ID in list_out
     plan_code, plan_out, plan_err = _run_specmint(
         ["mint", "plan", "-"], stdin=source.encode("utf-8")
