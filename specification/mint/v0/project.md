@@ -35,6 +35,7 @@ targets = ["fixture-alpha"]
 | `catalogs` | Optional snapshots that must match the closed v0 catalog |
 | `extensions` | Optional local JSON files (`path` only) |
 | `profiles` | Named lists of declared target ids; no credentials |
+| `integrations` | Optional requirements: source, version, local, capabilities, targets, phases, realization |
 
 Unknown keys are errors. Units are listed; Mint does not glob or search
 parent trees for source files. Walking parents is used only to find

@@ -1,0 +1,42 @@
+# Authoring a Mint integration
+
+Reference layout:
+
+```
+examples/integrations/local-sandbox/
+  mint-integration.json
+  schemas/
+  implementation/
+  fixtures/
+  tests/
+  README.md
+```
+
+`local.sandbox.ensure_marker` `0.1.0` realizes
+`local.sandbox.ensure_marker` `v1alpha1` for target kinds `local.sandbox`
+and `sandbox`. Supported phases are `describe`, `validate`, `observe`,
+`plan`, `verify`, and `evidence`. `execute` is refused. Execution stays
+in the SpecMint fake/local executor so the language package does not
+mutate the host.
+
+## Conformance
+
+```
+mint integrations conformance local.sandbox.ensure_marker
+```
+
+The harness negotiates `mint.protocol/v0`, checks `describe`, and
+requires `execute` to fail closed.
+
+## Digests
+
+Manifest and protocol documents use canonical JSON. The artifact digest
+is SHA-256 of the reference server file bytes. Configuration schemas, when
+present, are pinned separately. Credentials are not configuration.
+
+## Packaging
+
+Install the language package and run `mint-local-sandbox` or
+`python -m opsdevcode_specmint.integration`. A hosted registry, signed
+OCI artifacts, and marketplace admission are deferred. `mint integrations
+init <name>` writes a skeleton only.
