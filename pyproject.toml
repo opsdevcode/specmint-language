@@ -1,7 +1,7 @@
 [project]
 name = "specmint"
-version = "0.1.0a1"
-description = "Mint language: offline compiler, CLI, and editor support."
+version = "0.1.0a2"
+description = "Mint language: offline compiler, CLI, editor, and Integration Protocol v0."
 readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python = "==3.12.*"
@@ -28,7 +28,7 @@ specmint = "opsdevcode_specmint.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/opsdevcode/specmint-language"
-Documentation = "https://opsdevcode.github.io/specmint-language/"
+Documentation = "https://github.com/opsdevcode/specmint-language/blob/main/docs/index.md"
 Issues = "https://github.com/opsdevcode/specmint-language/issues"
 
 [build-system]

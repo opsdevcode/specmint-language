@@ -1,25 +1,30 @@
 name: Release
 
+# Tag-driven GitHub prerelease for the Mint language package specmint.
+# Build artifacts once. Never publish latest. Never use a PyPI PAT.
+# Accidental GitHub tag v1.0.0-alpha.1 is not current; do not rebuild it.
+
 on:
   push:
-    branches: [main]
-    paths-ignore:
-      - "docs/**"
-      - "**/*.md"
-      - "LICENSE"
-      - "CHANGELOG.md"
+    tags:
+      - "v*"
   workflow_dispatch:
 
-permissions:
-  contents: write
+permissions: {}
 
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  release:
+  build:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      pep440: ${{ steps.rel.outputs.pep440 }}
+      tag: ${{ steps.rel.outputs.tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # actions/checkout@v7
         with:
@@ -33,97 +38,237 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install package, tests, and semantic-release
-        run: |
-          pip install --no-cache-dir -e ".[dev]"
-          pip install --no-cache-dir "python-semantic-release~=10.0" build
-
       - id: rel
-        name: Resolve version and skip if GitHub Release exists
+        name: Validate tag against pyproject (refuse 1.x, latest, duplicates)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           git fetch --tags origin
 
-          psr() {
-            env -u GITHUB_OUTPUT semantic-release "$@"
+          if [[ "${GITHUB_REF}" != refs/tags/v* ]]; then
+            echo "Release only from a version tag (example: v0.1.0-alpha.2)."
+            exit 1
+          fi
+
+          TAG="${GITHUB_REF_NAME}"
+          LOWER="$(printf '%s' "${TAG}" | tr '[:upper:]' '[:lower:]')"
+          STRIPPED="${TAG#v}"
+
+          if [[ "${LOWER}" == "latest" || "${LOWER}" == "vlatest" \
+             || "${LOWER}" == "stable" || "${LOWER}" == "vstable" \
+             || "${LOWER}" == "release" ]]; then
+            echo "refuse alias tag ${TAG}; never publish latest/stable."
+            exit 1
+          fi
+          if [[ "${STRIPPED}" == 1.* ]]; then
+            echo "refuse 1.x tag ${TAG}; accidental v1.0.0-alpha.1 is not current."
+            exit 1
+          fi
+
+          PY_VERSION="$(python -c 'import tomllib, pathlib; print(tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]["version"])')"
+          if [[ "${PY_VERSION}" == 1.* ]]; then
+            echo "refuse pyproject version ${PY_VERSION}; stay on 0.x."
+            exit 1
+          fi
+
+          pep440_from_git_tag() {
+            local t="${1#v}"
+            if [[ "${t}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-alpha\.([0-9]+)$ ]]; then
+              printf '%sa%s\n' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+            elif [[ "${t}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)a([0-9]+)$ ]]; then
+              printf '%s\n' "${t}"
+            elif [[ "${t}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+              printf '%s\n' "${t}"
+            else
+              return 1
+            fi
           }
 
-          VERSION="$(psr version --print)"
-          PY_VERSION="$(python -c 'import tomllib, pathlib; print(tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]["version"])')"
-          if [[ "${VERSION}" == 1.* ]]; then
-            echo "PSR printed ${VERSION}; staying on ${PY_VERSION} (do not tag v1.0.0)."
-            VERSION="${PY_VERSION}"
-          fi
-          echo "version=${VERSION}" >>"${GITHUB_OUTPUT}"
+          git_tag_from_pep440() {
+            local v="$1"
+            if [[ "${v}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)a([0-9]+)$ ]]; then
+              printf 'v%s-alpha.%s\n' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+            elif [[ "${v}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+              printf 'v%s\n' "${v}"
+            else
+              return 1
+            fi
+          }
 
-          candidates=("v${VERSION}")
-          if [[ "${VERSION}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)a([0-9]+)$ ]]; then
-            candidates+=("v${BASH_REMATCH[1]}-alpha.${BASH_REMATCH[2]}")
-          fi
-          if [[ "${VERSION}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-alpha\.([0-9]+)$ ]]; then
-            candidates+=("v${BASH_REMATCH[1]}a${BASH_REMATCH[2]}")
+          PEP440="$(pep440_from_git_tag "${TAG}")" || {
+            echo "tag ${TAG} is not a supported vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-alpha.N tag."
+            exit 1
+          }
+          CANONICAL="$(git_tag_from_pep440 "${PY_VERSION}")"
+          if [[ "${PEP440}" != "${PY_VERSION}" || "${TAG}" != "${CANONICAL}" ]]; then
+            echo "tag ${TAG} (PEP 440 ${PEP440}) must match pyproject ${PY_VERSION} as ${CANONICAL}."
+            exit 1
           fi
 
-          for tag in "${candidates[@]}"; do
-            if gh release view "${tag}" >/dev/null 2>&1; then
-              echo "GitHub release ${tag} already exists; skip rebuild."
-              echo "tag=${tag}" >>"${GITHUB_OUTPUT}"
-              echo "created=false" >>"${GITHUB_OUTPUT}"
-              exit 0
+          equivalents=("${CANONICAL}")
+          if [[ "${PY_VERSION}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)a([0-9]+)$ ]]; then
+            equivalents+=("v${BASH_REMATCH[1]}a${BASH_REMATCH[2]}")
+          fi
+          for existing in "${equivalents[@]}"; do
+            if gh release view "${existing}" >/dev/null 2>&1; then
+              echo "GitHub Release ${existing} already exists; fail closed (do not rebuild or overwrite)."
+              exit 1
             fi
           done
 
-          TAG="v${VERSION}"
+          echo "pep440=${PY_VERSION}" >>"${GITHUB_OUTPUT}"
           echo "tag=${TAG}" >>"${GITHUB_OUTPUT}"
-          echo "created=true" >>"${GITHUB_OUTPUT}"
+          echo "Publishing canonical tag ${TAG} (PEP 440 ${PY_VERSION})."
 
       - name: Quality
-        if: steps.rel.outputs.created == 'true'
         env:
           PYTHONPATH: src
         run: |
+          pip install --no-cache-dir -e ".[dev]"
           ruff check src tests
           ruff format --check src tests
           mypy src
           bandit -r src -c pyproject.toml
           python -m pytest -q --strict-markers
 
-      - name: Build Python dist
-        if: steps.rel.outputs.created == 'true'
-        run: python -m build --sdist --wheel --outdir dist
+      - name: Build Python dist once
+        run: |
+          set -euo pipefail
+          python -m pip install --no-cache-dir "build==1.2.2"
+          python -m build --sdist --wheel --outdir dist
+          mapfile -t sdists < <(find dist -maxdepth 1 -name '*.tar.gz' -print)
+          mapfile -t wheels < <(find dist -maxdepth 1 -name '*.whl' -print)
+          if [[ "${#sdists[@]}" -ne 1 || "${#wheels[@]}" -ne 1 ]]; then
+            echo "expected exactly one sdist and one wheel in dist/"
+            ls -la dist
+            exit 1
+          fi
 
-      - name: Package VSIX
-        if: steps.rel.outputs.created == 'true'
+      - name: Test exact artifacts in isolated Python 3.12 venvs
+        run: |
+          set -euo pipefail
+          PY_VERSION="$(python -c 'import tomllib, pathlib; print(tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]["version"])')"
+          SDIST="$(find dist -maxdepth 1 -name '*.tar.gz' -print)"
+          WHEEL="$(find dist -maxdepth 1 -name '*.whl' -print)"
+          smoke() {
+            local artifact="$1"
+            local root
+            root="$(mktemp -d)"
+            python -m venv "${root}/venv"
+            "${root}/venv/bin/python" -m pip install --no-cache-dir --upgrade pip
+            "${root}/venv/bin/python" -m pip install --no-cache-dir "${artifact}"
+            "${root}/venv/bin/python" -c "from opsdevcode_specmint import __version__; assert __version__ == '${PY_VERSION}', __version__"
+            "${root}/venv/bin/mint" version
+            "${root}/venv/bin/python" -c "from opsdevcode_specmint.mint.cli import _build_parser; choices = dict(_build_parser()._subparsers._group_actions[0].choices); assert 'apply' not in choices"
+            rm -rf "${root}"
+          }
+          smoke "${SDIST}"
+          smoke "${WHEEL}"
+
+      - name: Package VSIX once
         working-directory: editors/vscode
         run: |
+          set -euo pipefail
           npm ci
           npx vsce package --no-git-tag-version --no-update-package-json
           mkdir -p ../../dist
-          mv *.vsix ../../dist/
+          mv ./*.vsix ../../dist/
 
-      - name: Create GitHub Release
-        if: steps.rel.outputs.created == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.rel.outputs.tag }}
-          VERSION: ${{ steps.rel.outputs.version }}
+      - name: SHA-256 checksums
         run: |
           set -euo pipefail
-          if git rev-parse "${TAG}" >/dev/null 2>&1; then
-            echo "Tag ${TAG} exists without a GitHub release; creating it."
-          else
-            git tag "${TAG}" "${GITHUB_SHA}"
-            git push origin "refs/tags/${TAG}"
+          (
+            cd dist
+            sha256sum ./*.tar.gz ./*.whl ./*.vsix > SHA256SUMS
+            cat SHA256SUMS
+          )
+
+      - name: SBOM
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          path: dist
+          format: spdx-json
+          artifact-name: specmint-python.spdx.json
+          output-file: dist/specmint.spdx.json
+          upload-artifact: true
+          upload-release-assets: false
+
+      - name: Upload once-built artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: mint-release-dist
+          path: dist/**
+          if-no-files-found: error
+          retention-days: 14
+
+  github-release:
+    needs: build
+    if: github.event_name != 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: mint-release-dist
+          path: dist
+
+      - name: Attest release artifacts
+        uses: actions/attest-build-provenance@db473fddc028af60658334401dc6fa3ffd8669fd # v2.3.0
+        with:
+          subject-path: |
+            dist/*.tar.gz
+            dist/*.whl
+            dist/*.vsix
+
+      - name: Create GitHub prerelease with tested artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${{ needs.build.outputs.tag }}"
+          if [[ -z "${TAG}" ]]; then
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            echo "GitHub Release ${TAG} already exists; fail closed (do not rebuild or overwrite)."
+            exit 1
           fi
           gh release create "${TAG}" dist/* \
             --prerelease \
             --title "Mint ${TAG#v}" \
-            --notes "Mint language ${TAG}. Offline compiler, CLI, and editor. mint apply is not included." \
+            --notes "Mint language ${TAG}. Integration Protocol v0. Offline compiler, CLI, and editor. pipx install specmint / uv tool install specmint. mint apply is not included. Not production-ready. Not 1.0." \
             --target "${GITHUB_SHA}"
 
-      - name: PyPI and Marketplace placeholders
-        if: steps.rel.outputs.created == 'true'
+  pypi:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: mint-release-dist
+          path: dist
+
+      - name: Isolate the same tested wheel and sdist
         run: |
-          echo "No PyPI trusted publisher or VSCE/OVSX PATs on this repo; GitHub Release only."
+          set -euo pipefail
+          mkdir -p pypi-dist
+          cp dist/*.whl dist/*.tar.gz pypi-dist/
+          ls -la pypi-dist
+
+      - name: Publish the same tested bytes to PyPI via OIDC
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        with:
+          packages-dir: pypi-dist
+          skip-existing: false
+          verbose: true
+          # Fail closed: no password, no token, no skip. Trusted publisher
+          # must already be registered for project specmint / owner opsdevcode
+          # / repo specmint-language / workflow release.yml. Missing publisher
+          # fails this job only; GitHub Release still publishes.

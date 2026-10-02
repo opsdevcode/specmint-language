@@ -38,8 +38,20 @@ def test_version_flag() -> None:
 def test_help_lists_language_commands() -> None:
     code, out, err = _run([])
     assert code == 0
-    for name in ("check", "compile", "convert", "fmt", "inspect", "lsp", "version"):
+    for name in (
+        "check",
+        "compile",
+        "convert",
+        "fmt",
+        "inspect",
+        "integrations",
+        "lock",
+        "lsp",
+        "plan",
+        "version",
+    ):
         assert name in out
+    assert "apply" not in out.split()
     assert err == ""
 
 

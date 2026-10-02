@@ -1,4 +1,4 @@
-"""OpsDevCode SpecMint — internal specification compiler."""
+"""Mint language: offline compiler, CLI, editor, and Integration Protocol v0."""
 
 from __future__ import annotations
 

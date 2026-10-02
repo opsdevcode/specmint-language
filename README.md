@@ -1,54 +1,100 @@
 # Mint language
 
-Mint is an offline, deterministic language for governed automation intent.
-This repository is the public language extract: grammar, `MintIR`, reference
-compiler, CLI (`mint`), conformance suite, and VS Code extension.
+Mint is the governed automation language for expressing what an
+engineering system should accomplish. SpecMint turns that intent into an
+approved, observable, verifiable lifecycle. Integrations connect Mint
+capabilities to repositories, clouds, Kubernetes, SaaS platforms, and
+internal systems without moving execution authority into the language.
 
-**SpecMint core** is public at
-[`opsdevcode/specmint-platform`](https://github.com/opsdevcode/specmint-platform).
-This repository is the Mint language extract only. The hosted SpecMint
-service stays private. `opsdevcode/specmint` remains internal. There is no
-`mint apply` command. There are no live providers or credentials here.
+This repository is the public language extract: grammar, `MintIR`,
+reference compiler, CLI (`mint`), Integration Protocol v0, conformance
+suite, and VS Code extension.
+
+**Public preview / alpha.2 — not production-ready, not 1.0.**
+
+[SpecMint Platform](https://github.com/opsdevcode/specmint-platform) is the
+governed runtime. The hosted SpecMint service stays private.
+`opsdevcode/specmint` remains internal. There is no `mint apply` command.
+There are no live providers or credentials here.
+
+Product page: [opsdevco.de/products/mint](https://opsdevco.de/products/mint)
 
 ## Install
 
 ```bash
-pip install specmint
+pipx install specmint
+mint version
+```
+
+```bash
+uv tool install specmint
 mint version
 ```
 
 The distribution name is `specmint`. The language executable is `mint`.
 A thin `specmint mint …` alias forwards to the same language CLI.
 
-Alpha version: **0.1.0a1** (Git tag `v0.1.0-alpha.1`).
+Until the PyPI trusted publisher is registered, install the exact GitHub
+Release wheel (checksums on the release):
+
+```bash
+pipx install specmint==0.1.0a2 --index-url https://pypi.org/simple
+# or, from the GitHub Release asset:
+# pipx install ./specmint-0.1.0a2-py3-none-any.whl
+# uv tool install ./specmint-0.1.0a2-py3-none-any.whl
+```
+
+Alpha version: **0.1.0a2** (Git tag `v0.1.0-alpha.2`). Do not use a
+`latest` tag; none is published.
+
+## Five-minute quickstart
+
+See [docs/quickstart.md](docs/quickstart.md). Copy
+`examples/projects/local-marker`, then `check`, `fmt --check`, `lock`,
+`compile`, `inspect`, `plan`, and `mint integrations conformance`. SpecMint
+begins after that plan: approval, fake/local execution, verification, and
+evidence. No credentials. No live mutation.
+
+## Headline: Integration Protocol v0
+
+Mint capabilities remain the promise. Integrations realize capabilities
+for targets. A realization is a resolved binding, not a downloadable
+package. Planning never grants execution authority.
+
+- [Integration Protocol](specification/mint/v0/integration-protocol.md)
+- [Authoring an integration](specification/mint/v0/integration-authoring.md)
+- [Trust and permissions](specification/mint/v0/integration-trust.md)
+- [ADR 018](docs/adr/018-mint-integration-terminology.md)
+
+`mint adapters` is a deprecated alpha alias of `mint integrations`.
 
 ## Language commands
 
 `check` `compile` `convert` `fmt` `inspect` `init` `lock` `lsp` `plan`
-`project` `adapters` `repository` `version`
+`project` `integrations` `adapters` `repository` `version`
 
 `compile` emits canonical MintIR. `plan` is snapshot-driven and offline.
 `mint apply` is not implemented.
 
 ## Documentation
 
-- [Language](specification/mint/v0/language.md)
+- [Language overview](specification/mint/v0/language.md)
+- [Why Mint is not Terraform](docs/why-not-terraform.md)
+- [Project and lock model](specification/mint/v0/project.md)
 - [MintIR](specification/mint/v0/ir.md)
-- [Grammar](specification/mint/v0/grammar.ebnf)
-- [Project model](specification/mint/v0/project.md)
 - [Editor / LSP](specification/mint/v0/editor.md)
-- [Conversion](specification/mint/v0/conversion.md)
-- [Adapters](specification/mint/v0/adapters.md)
-- [Repository snapshots](specification/mint/v0/repository-snapshot.md)
+- [Compatibility policy](docs/compatibility.md)
+- [Public roadmap boundaries](docs/roadmap.md)
 - [Conformance](specification/mint/v0/conformance/README.md)
-- [Platform composition](specification/mint/v0/platform-composition.md)
-- GitHub Pages: https://opsdevcode.github.io/specmint-language/
+- [Security reporting](SECURITY.md)
+- [Contributing](CONTRIBUTING.md)
+- [Docs index](docs/index.md)
 
 ## VS Code
 
-Publisher id: `opsdevcode.mint-language`. Package a VSIX from `editors/vscode`.
-Marketplace publish requires the OpsDevCode publisher; GitHub Releases always
-attach the VSIX.
+Publisher id: `opsdevcode.mint-language`. GitHub Releases attach the VSIX
+built for this tag. Marketplace and Open VSX publish require the OpsDevCode
+publisher identity.
 
 ## License
 

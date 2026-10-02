@@ -15,11 +15,17 @@ function fail(message) {
 }
 
 const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-if (pkg.private !== true) {
-  fail("package.json private must be true");
+if (pkg.private === true) {
+  fail("public extract package.json must not set private");
 }
-if (pkg.license !== "LicenseRef-Proprietary") {
-  fail("package.json license must stay LicenseRef-Proprietary");
+if (pkg.license !== "Apache-2.0") {
+  fail("package.json license must stay Apache-2.0");
+}
+if (pkg.publisher !== "opsdevcode" || pkg.name !== "mint-language") {
+  fail("extension identity must stay opsdevcode.mint-language");
+}
+if (pkg.version !== "0.1.0-alpha.2") {
+  fail("extension version must match Mint 0.1.0-alpha.2");
 }
 if (pkg.capabilities.untrustedWorkspaces.supported !== false) {
   fail("untrusted workspaces must be unsupported");

@@ -15,6 +15,7 @@ def test_extension_is_public_and_untrusted_opt_out() -> None:
     assert package["license"] == "Apache-2.0"
     assert package["publisher"] == "opsdevcode"
     assert package["name"] == "mint-language"
+    assert package["version"] == "0.1.0-alpha.2"
     assert package.get("publishConfig") is None
     assert package["capabilities"]["untrustedWorkspaces"]["supported"] is False
     assert package["dependencies"]["vscode-languageclient"] == "9.0.1"
