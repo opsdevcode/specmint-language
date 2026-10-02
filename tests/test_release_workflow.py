@@ -9,7 +9,9 @@ TRAIN = (REPO / ".github" / "workflows" / "release-train.yml").read_text(
     encoding="utf-8"
 )
 CONFIG = json.loads((REPO / "release-please-config.json").read_text(encoding="utf-8"))
-MANIFEST = json.loads((REPO / ".release-please-manifest.json").read_text(encoding="utf-8"))
+MANIFEST = json.loads(
+    (REPO / ".release-please-manifest.json").read_text(encoding="utf-8")
+)
 
 
 def _assert_actions_are_pinned(workflow: str) -> None:
@@ -52,8 +54,14 @@ def test_publish_is_release_event_driven_and_once_built() -> None:
     assert "Test exact artifacts in isolated Python 3.12 venvs" in PUBLISH
     assert "sha256sum" in PUBLISH
     assert "anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c" in PUBLISH
-    assert "actions/attest-build-provenance@db473fddc028af60658334401dc6fa3ffd8669fd" in PUBLISH
-    assert "pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e" in PUBLISH
+    assert (
+        "actions/attest-build-provenance@db473fddc028af60658334401dc6fa3ffd8669fd"
+        in PUBLISH
+    )
+    assert (
+        "pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e"
+        in PUBLISH
+    )
 
 
 def test_publish_refuses_manual_aliases_and_tokens() -> None:
@@ -71,4 +79,3 @@ def test_publish_refuses_manual_aliases_and_tokens() -> None:
 def test_release_actions_are_commit_pinned() -> None:
     _assert_actions_are_pinned(TRAIN)
     _assert_actions_are_pinned(PUBLISH)
-
