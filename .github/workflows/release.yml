@@ -227,6 +227,7 @@ jobs:
       - name: Create GitHub prerelease with tested artifacts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           TAG="${{ needs.build.outputs.tag }}"
