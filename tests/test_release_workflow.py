@@ -25,6 +25,7 @@ def test_release_refuses_latest_rebuild_and_pypi_token() -> None:
     assert "password:" not in WORKFLOW
     assert "skip-existing: false" in WORKFLOW
     assert "packages-dir: pypi-dist" in WORKFLOW
+    assert "GH_REPO: ${{ github.repository }}" in WORKFLOW
     assert "refuse 1.x tag" in WORKFLOW
 
 
