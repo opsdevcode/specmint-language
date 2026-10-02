@@ -26,6 +26,7 @@ from opsdevcode_specmint.mint.inputs import (
     load_declared_paths,
 )
 from opsdevcode_specmint.mint.inspect_ir import inspect_mint_ir
+from opsdevcode_specmint.mint.integrations_cmd import deprecation_notice, run_integrations
 from opsdevcode_specmint.mint.lsp.server import serve_stdio
 from opsdevcode_specmint.mint.parser import parse_mint_text
 from opsdevcode_specmint.mint.project import (
@@ -63,7 +64,7 @@ def main(
         parser.print_help(out)
         return 0
     try:
-        return _dispatch(args, stdin=in_stream, stdout=out)
+        return _dispatch(args, stdin=in_stream, stdout=out, stderr=err)
     except MintError as exc:
         err.write(json.dumps(diagnostic_payload(exc.diagnostic), indent=2, sort_keys=True) + "\n")
         return 1
@@ -79,11 +80,15 @@ def main(
         return 1
 
 
-def _dispatch(args: argparse.Namespace, *, stdin: IO[str], stdout: TextIO) -> int:
+def _dispatch(args: argparse.Namespace, *, stdin: IO[str], stdout: TextIO, stderr: TextIO) -> int:
     if args.command == "lsp":
         return serve_stdio()
+    if args.command == "integrations":
+        return run_integrations(args, stdout=stdout, stderr=stderr)
     if args.command == "adapters":
-        return _run_adapters(args, stdout=stdout)
+        code = _run_adapters(args, stdout=stdout)
+        stderr.write(deprecation_notice("mint adapters " + str(args.adapters_command)) + "\n")
+        return code
     if args.command == "repository":
         return _run_repository(args, stdout=stdout)
     if args.command == "inspect":
@@ -466,7 +471,26 @@ def _build_parser() -> argparse.ArgumentParser:
         "--output",
         help="Write the MintPlanResult JSON to a confined file; stdout still receives the plan",
     )
-    adapters_cmd = sub.add_parser("adapters", help="List or inspect the builtin adapter registry")
+    integrations_cmd = sub.add_parser(
+        "integrations",
+        help="List, inspect, check, resolve, and conformance-test Mint integrations",
+    )
+    integrations_sub = integrations_cmd.add_subparsers(dest="integrations_command")
+    integrations_sub.add_parser("list", help="List builtin integration identities")
+    inspect_integration = integrations_sub.add_parser("inspect", help="Inspect one integration")
+    inspect_integration.add_argument("identity")
+    check_integration = integrations_sub.add_parser("check", help="Validate a manifest file")
+    check_integration.add_argument("manifest")
+    resolve_integration = integrations_sub.add_parser("resolve", help="Resolve one realization")
+    resolve_integration.add_argument("--project", required=True)
+    resolve_integration.add_argument("--capability", required=True)
+    resolve_integration.add_argument("--capability-version", required=True)
+    resolve_integration.add_argument("--target", required=True)
+    resolve_integration.add_argument("--target-kind", required=True)
+    resolve_integration.add_argument("--phase", required=True)
+    conformance = integrations_sub.add_parser("conformance", help="Run reference conformance")
+    conformance.add_argument("integration")
+    adapters_cmd = sub.add_parser("adapters", help="Deprecated alias of mint integrations")
     adapters_sub = adapters_cmd.add_subparsers(dest="adapters_command")
     adapters_sub.add_parser("list", help="Print builtin AdapterManifest documents")
     inspect_adapter = adapters_sub.add_parser("inspect", help="Print one builtin AdapterManifest")

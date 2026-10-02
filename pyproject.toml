@@ -23,6 +23,7 @@ dev = [
 
 [project.scripts]
 mint = "opsdevcode_specmint.mint.cli:main"
+mint-local-sandbox = "opsdevcode_specmint.integration.reference_server:main"
 specmint = "opsdevcode_specmint.cli:main"
 
 [project.urls]
@@ -38,7 +39,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-opsdevcode_specmint = ["py.typed"]
+opsdevcode_specmint = ["py.typed", "integration/schemas/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

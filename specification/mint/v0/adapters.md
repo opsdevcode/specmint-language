@@ -4,6 +4,15 @@ Plan-only SDK over compiled `MintIR`. Adapters never mutate filesystems,
 call provider SDKs, or read live state. There is no `mint apply`
 command.
 
+`mint.adapter/v0` remains the historical manifest. The canonical public
+extension term is Mint Integration. See
+[integration-protocol.md](integration-protocol.md). `mint adapters list`
+and `mint adapters inspect` stay as deprecated aliases for one alpha
+window, emit `MINT_DEPRECATED_ADAPTER`, and do not change stdout.
+Removal is eligible at `0.2.0`. A mapping to `mint.integration/v0` is
+accepted only when it is lossless (`plan-only`, mutation `forbidden`).
+Anything else is refused. Historical fixtures stay in place.
+
 ## Pipeline
 
 `compile_program` → `PlanRequest` → capability accounting → explicit
