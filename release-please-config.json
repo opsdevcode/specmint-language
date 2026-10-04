@@ -16,7 +16,8 @@
           "path": "editors/vscode/package.json",
           "jsonpath": "$.version"
         }
-      ]
+      ],
+      "skip-labeling": true
     }
   }
 }

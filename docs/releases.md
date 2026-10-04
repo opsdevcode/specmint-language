@@ -18,8 +18,7 @@ During the alpha channel, the prerelease strategy advances
 categories. Moving to a stable channel requires a separate reviewed change.
 
 The Release Train uses a one-hour GitHub App token scoped to only
-`opsdevcode/specmint-language`, with only contents, issues, metadata, and pull
-request permissions. No PAT or PyPI token is used. The existing PyPI trusted
+`opsdevcode/specmint-language`, with only contents, metadata, and pull request permissions. No PAT or PyPI token is used. The existing PyPI trusted
 publisher remains bound to `.github/workflows/release.yml`.
 
 Mint remains an alpha preview: no `latest`, no stable/1.0 claim, and no

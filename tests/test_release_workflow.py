@@ -32,12 +32,14 @@ def test_release_train_uses_conventional_semver_release_prs() -> None:
     assert "repositories: specmint-language" in TRAIN
     assert "permission-contents: write" in TRAIN
     assert "permission-pull-requests: write" in TRAIN
+    assert "permission-issues:" not in TRAIN
     assert package["release-type"] == "python"
     assert package["versioning-strategy"] == "prerelease"
     assert package["prerelease"] is True
     assert package["prerelease-type"] == "alpha"
     assert package["include-v-in-tag"] is True
     assert package["include-component-in-tag"] is False
+    assert package["skip-labeling"] is True
     assert MANIFEST == {".": "0.1.0-alpha.2"}
 
 
