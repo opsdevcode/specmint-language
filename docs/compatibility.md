@@ -3,7 +3,7 @@
 Edition `v0` is public preview. Contracts may change before 1.0. This
 repository will not claim production stability.
 
-## Kept in 0.1.0-alpha.2
+## Kept in the current alpha.2 preview
 
 - Canonical MintIR for edition `v0`
 - `mint.toml` / `mint.lock` project model
@@ -25,5 +25,5 @@ forbidden are already refused.
 - CUE evaluation of caller-supplied programs
 - production-ready or 1.0 claims
 
-Pin a release by Git tag (`v0.1.0-alpha.2`) and artifact SHA-256. There
+Pin a release by Git tag (`v0.1.x-alpha.N`) and artifact SHA-256. There
 is no `latest` tag.

@@ -18,6 +18,7 @@ governed runtime. The hosted SpecMint service stays private.
 There are no live providers or credentials here.
 
 Product page: [opsdevco.de/products/mint](https://opsdevco.de/products/mint)
+Docs: [Mint language documentation](https://opsdevcode.github.io/specmint-language/)
 
 ## Install
 
@@ -34,18 +35,8 @@ mint version
 The distribution name is `specmint`. The language executable is `mint`.
 A thin `specmint mint …` alias forwards to the same language CLI.
 
-Until the PyPI trusted publisher is registered, install the exact GitHub
-Release wheel (checksums on the release):
-
-```bash
-pipx install specmint==0.1.0a2 --index-url https://pypi.org/simple
-# or, from the GitHub Release asset:
-# pipx install ./specmint-0.1.0a2-py3-none-any.whl
-# uv tool install ./specmint-0.1.0a2-py3-none-any.whl
-```
-
-Alpha version: **0.1.0a2** (Git tag `v0.1.0-alpha.2`). Do not use a
-`latest` tag; none is published.
+Pin a GitHub Release tag and artifact SHA-256 when you need a specific
+build. There is no `latest` tag.
 
 ## Five-minute quickstart
 
@@ -93,8 +84,8 @@ package. Planning never grants execution authority.
 ## VS Code
 
 Publisher id: `opsdevcode.mint-language`. GitHub Releases attach the VSIX
-built for this tag. Marketplace and Open VSX publish require the OpsDevCode
-publisher identity.
+built for this tag. The release workflow publishes that same VSIX to
+VS Code Marketplace and Open VSX.
 
 ## License
 

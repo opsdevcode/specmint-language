@@ -1,21 +1,45 @@
 name: GitHub Pages
 
-# Org administrators currently disable Pages site creation. Keep docs in
-# /docs for when Pages is enabled. This workflow stays a no-op so CI is green.
+# Smallest public docs host for this repository. Canonical URL:
+# https://opsdevcode.github.io/specmint-language/
+# mint.opsdevco.de is not used until that host answers anonymous HTTP 200.
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  skip:
+  deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     steps:
-      - name: Pages disabled at org
-        run: |
-          echo "GitHub Pages is disabled for the opsdevcode org."
-          echo "Language docs remain in specification/mint/v0/ and docs/index.md."
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # actions/checkout@v7
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Build public docs site
+        run: python3 scripts/build_docs_site.py --out site
+
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # actions/configure-pages@v5.0.0
+
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # actions/upload-pages-artifact@v3.0.1
+        with:
+          path: site
+
+      - id: deploy
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # actions/deploy-pages@v4.0.5

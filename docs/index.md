@@ -3,7 +3,8 @@
 Public extract of the Mint language: specification, MintIR, reference
 compiler, `mint` CLI, editor, and Integration Protocol v0.
 
-**Public preview 0.1.0-alpha.2. Not production-ready. Not 1.0.**
+**Public preview / alpha.2. Not production-ready. Not 1.0.** Canonical
+docs: <https://opsdevcode.github.io/specmint-language/>.
 
 - [Five-minute quickstart](quickstart.md)
 - [Language](../specification/mint/v0/language.md)
@@ -29,5 +30,4 @@ compiler, `mint` CLI, editor, and Integration Protocol v0.
 - [Product page](https://opsdevco.de/products/mint)
 
 `mint apply` is not part of this extract. SpecMint is the governed
-runtime. The hosted service stays private. GitHub Pages for this
-repository is not enabled; documentation lives in this tree.
+runtime. The hosted service stays private.
