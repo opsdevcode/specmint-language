@@ -11,11 +11,8 @@ pipx install specmint
 mint version
 ```
 
-Expected version line:
-
-```text
-mint language v0 (specmint 0.1.0a2)
-```
+`mint version` prints the installed language version. Do not pin a
+superseded release in this install path.
 
 Copy the checked-in local marker example, then run the language loop:
 

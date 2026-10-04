@@ -193,3 +193,59 @@ jobs:
           packages-dir: pypi-dist
           skip-existing: false
           verbose: true
+
+  vscode-marketplace:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: mint-release-dist
+          path: dist
+
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: "20"
+
+      - name: Publish the tested VSIX to VS Code Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${VSCE_PAT}" ]]; then
+            echo "missing VSCE_PAT: set repo secret VSCE_PAT to a Marketplace PAT for publisher opsdevcode"
+            exit 1
+          fi
+          vsix="$(find dist -maxdepth 1 -name '*.vsix' | sort)"
+          test "$(printf '%s\n' "${vsix}" | wc -l | tr -d ' ')" = 1
+          npx --yes @vscode/vsce@3.2.2 publish --packagePath "${vsix}"
+
+  open-vsx:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: mint-release-dist
+          path: dist
+
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: "20"
+
+      - name: Publish the tested VSIX to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${OVSX_PAT}" ]]; then
+            echo "missing OVSX_PAT: set repo secret OVSX_PAT to an Open VSX token for namespace opsdevcode"
+            exit 1
+          fi
+          vsix="$(find dist -maxdepth 1 -name '*.vsix' | sort)"
+          test "$(printf '%s\n' "${vsix}" | wc -l | tr -d ' ')" = 1
+          npx --yes ovsx@0.10.5 publish "${vsix}"
