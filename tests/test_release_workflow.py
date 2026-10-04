@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -40,7 +41,8 @@ def test_release_train_uses_conventional_semver_release_prs() -> None:
     assert package["include-v-in-tag"] is True
     assert package["include-component-in-tag"] is False
     assert package["skip-labeling"] is True
-    assert MANIFEST == {".": "0.1.0-alpha.2"}
+    assert set(MANIFEST) == {"."}
+    assert re.fullmatch(r"0\.\d+\.\d+-alpha\.\d+", MANIFEST["."])
 
 
 def test_publish_is_release_event_driven_and_once_built() -> None:

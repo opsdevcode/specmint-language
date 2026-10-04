@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 const root = path.join(__dirname, "..");
+const repoRoot = path.join(root, "..", "..");
 const pkgPath = path.join(root, "package.json");
 const grammarPath = path.join(root, "syntaxes", "mint.tmLanguage.json");
 const extPath = path.join(root, "src", "extension.js");
@@ -13,6 +14,13 @@ function fail(message) {
   console.error(message);
   process.exit(1);
 }
+
+const pyproject = fs.readFileSync(path.join(repoRoot, "pyproject.toml"), "utf8");
+const versionMatch = pyproject.match(/^version\s*=\s*"([^"]+)"$/m);
+if (!versionMatch) {
+  fail("pyproject.toml must declare project.version");
+}
+const expectedVersion = versionMatch[1].replace(/a(\d+)$/, "-alpha.$1");
 
 const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
 if (pkg.private === true) {
@@ -24,8 +32,8 @@ if (pkg.license !== "Apache-2.0") {
 if (pkg.publisher !== "opsdevcode" || pkg.name !== "mint-language") {
   fail("extension identity must stay opsdevcode.mint-language");
 }
-if (pkg.version !== "0.1.0-alpha.2") {
-  fail("extension version must match Mint 0.1.0-alpha.2");
+if (pkg.version !== expectedVersion) {
+  fail(`extension version ${pkg.version} must match Mint ${expectedVersion}`);
 }
 if (pkg.capabilities.untrustedWorkspaces.supported !== false) {
   fail("untrusted workspaces must be unsupported");

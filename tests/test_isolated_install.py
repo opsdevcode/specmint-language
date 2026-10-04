@@ -128,7 +128,7 @@ def test_pipx_and_uv_install_from_wheel(tmp_path: Path) -> None:
             env=env,
         )
         assert version.returncode == 0, version.stderr
-        assert "specmint 0.1.0a2" in version.stdout
+        assert f"specmint {__version__}" in version.stdout
         subprocess.run([pipx, "uninstall", "specmint"], check=False, env=env, capture_output=True)
 
     if uv is not None:
@@ -150,7 +150,7 @@ def test_pipx_and_uv_install_from_wheel(tmp_path: Path) -> None:
             env=env,
         )
         assert version.returncode == 0, version.stderr
-        assert "specmint 0.1.0a2" in version.stdout
+        assert f"specmint {__version__}" in version.stdout
         subprocess.run(
             [uv, "tool", "uninstall", "specmint"],
             check=False,
@@ -159,7 +159,7 @@ def test_pipx_and_uv_install_from_wheel(tmp_path: Path) -> None:
         )
 
 
-def test_vsix_manifest_matches_alpha2(tmp_path: Path) -> None:
+def test_vsix_manifest_matches_project_version(tmp_path: Path) -> None:
     vsce = shutil.which("npx")
     if vsce is None:
         pytest.skip("npx is required to package the VSIX")
@@ -187,7 +187,7 @@ def test_vsix_manifest_matches_alpha2(tmp_path: Path) -> None:
     with zipfile.ZipFile(dest) as archive:
         raw = archive.read("extension/package.json")
     package = json.loads(raw.decode("utf-8"))
-    assert package["version"] == "0.1.0-alpha.2"
+    assert package["version"] == __version__.replace("a", "-alpha.")
     assert package["publisher"] == "opsdevcode"
     assert package["name"] == "mint-language"
     assert package["license"] == "Apache-2.0"
