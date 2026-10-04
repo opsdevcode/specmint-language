@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
+
+from opsdevcode_specmint import __version__
 
 _ROOT = Path(__file__).resolve().parents[1]
 _PKG = _ROOT / "editors" / "vscode" / "package.json"
 _GRAMMAR = _ROOT / "editors" / "vscode" / "syntaxes" / "mint.tmLanguage.json"
 _EXT = _ROOT / "editors" / "vscode" / "src" / "extension.js"
+
+
+def _semver(version: str) -> str:
+    return re.sub(r"a(\d+)$", r"-alpha.\1", version)
 
 
 def test_extension_is_public_and_untrusted_opt_out() -> None:
@@ -15,13 +22,15 @@ def test_extension_is_public_and_untrusted_opt_out() -> None:
     assert package["license"] == "Apache-2.0"
     assert package["publisher"] == "opsdevcode"
     assert package["name"] == "mint-language"
-    assert package["version"] == "0.1.0-alpha.2"
+    assert package["version"] == _semver(__version__)
     assert package.get("publishConfig") is None
     assert package["capabilities"]["untrustedWorkspaces"]["supported"] is False
     assert package["dependencies"]["vscode-languageclient"] == "9.0.1"
     lock = json.loads(
         (_ROOT / "editors" / "vscode" / "package-lock.json").read_text(encoding="utf-8")
     )
+    assert lock["version"] == package["version"]
+    assert lock["packages"][""]["version"] == package["version"]
     assert lock["packages"]["node_modules/vscode-languageclient"]["version"] == "9.0.1"
 
 
