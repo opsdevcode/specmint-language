@@ -1,6 +1,6 @@
 [project]
 name = "specmint"
-version = "0.1.1-alpha.2"
+version = "0.2.0-alpha.2"
 description = "Mint language: offline compiler, CLI, editor, and Integration Protocol v0."
 readme = "README.md"
 license = { text = "Apache-2.0" }
