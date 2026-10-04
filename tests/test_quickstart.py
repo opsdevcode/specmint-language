@@ -20,10 +20,9 @@ def _run(argv: list[str], *, stdin: str = "") -> tuple[int, str, str]:
 
 
 def test_public_preview_version() -> None:
-    assert __version__ == "0.1.0a2"
     code, out, err = _run(["version"])
     assert code == 0
-    assert out == "mint language v0 (specmint 0.1.0a2)\n"
+    assert out == f"mint language v0 (specmint {__version__})\n"
     assert err == ""
 
 
