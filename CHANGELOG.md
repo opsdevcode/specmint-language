@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.1.1-alpha.2...v0.2.0-alpha.2) (2026-10-04)
+
+
+### Features
+
+* publish VSIX and host public docs ([#13](https://github.com/opsdevcode/specmint-language/issues/13)) ([de29248](https://github.com/opsdevcode/specmint-language/commit/de2924882296afa50eb1da677ff35c4b4399c7d0))
+
 ## [0.1.1-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.1.0-alpha.2...v0.1.1-alpha.2) (2026-10-04)
 
 
