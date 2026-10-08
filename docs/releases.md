@@ -10,11 +10,11 @@ Humans and local scripts do not calculate or push release tags.
 3. Merging that green release PR is the release approval. Release Please
    creates `vMAJOR.MINOR.PATCH-alpha.N` and a GitHub prerelease.
 4. The release event builds and tests the wheel, sdist, and VSIX once; attaches
-   checksums, SBOM, and attestations; publishes those same Python artifact
-   bytes to PyPI through trusted publishing; and publishes the same VSIX to
-   VS Code Marketplace (`VSCE_PAT`) and Open VSX (`OVSX_PAT`). Missing
-   publisher tokens fail the corresponding job. The two registries are
-   independent.
+   those artifacts plus checksums, SBOM, and attestations to the GitHub
+   prerelease; and publishes the same Python artifact bytes to PyPI through
+   trusted publishing (OIDC). The VSIX stays on the GitHub Release. VS Code
+   Marketplace and Open VSX publication is deferred and is not part of this
+   workflow. Missing `VSCE_PAT` / `OVSX_PAT` cannot fail a release.
 
 During the alpha channel, the prerelease strategy advances
 `0.1.0-alpha.N`. Release notes retain the `fix:`, `feat:`, and breaking-change

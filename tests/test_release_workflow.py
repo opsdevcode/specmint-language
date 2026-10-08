@@ -75,20 +75,15 @@ def test_release_actions_are_commit_pinned() -> None:
     _assert_actions_are_pinned(PUBLISH)
 
 
-def test_publish_vscode_registries_fail_closed_and_independent() -> None:
-    assert "vscode-marketplace:" in PUBLISH
-    assert "open-vsx:" in PUBLISH
-    assert "needs: vscode-marketplace" not in PUBLISH
-    assert "needs: open-vsx" not in PUBLISH
-    assert "vsce@3.2.2 publish --packagePath" in PUBLISH
-    assert "ovsx@0.10.5 publish" in PUBLISH
-    assert "secrets.VSCE_PAT" in PUBLISH
-    assert "secrets.OVSX_PAT" in PUBLISH
-    assert "missing VSCE_PAT: set repo secret VSCE_PAT" in PUBLISH
-    assert "missing OVSX_PAT: set repo secret OVSX_PAT" in PUBLISH
-    assert "if: ${{ secrets.VSCE_PAT" not in PUBLISH
-    assert "if: secrets.VSCE_PAT" not in PUBLISH
-    assert "if: ${{ secrets.OVSX_PAT" not in PUBLISH
-    assert "if: secrets.OVSX_PAT" not in PUBLISH
-    assert "vsce publish --pat" not in PUBLISH
-    assert "ovsx publish --pat" not in PUBLISH
+def test_publish_keeps_github_vsix_and_drops_marketplace_jobs() -> None:
+    assert "github-assets:" in PUBLISH
+    assert "pypi:" in PUBLISH
+    assert "npx vsce package --no-git-tag-version --no-update-package-json" in PUBLISH
+    assert "dist/*.vsix" in PUBLISH
+    assert "vscode-marketplace:" not in PUBLISH
+    assert "open-vsx:" not in PUBLISH
+    assert "VSCE_PAT" not in PUBLISH
+    assert "OVSX_PAT" not in PUBLISH
+    assert "vsce publish" not in PUBLISH
+    assert "ovsx " not in PUBLISH
+    assert "ovsx@" not in PUBLISH

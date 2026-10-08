@@ -7,6 +7,7 @@ compiler, `mint` CLI, editor, and Integration Protocol v0.
 docs: <https://opsdevcode.github.io/specmint-language/>.
 
 - [Five-minute quickstart](quickstart.md)
+- [GitHub Releases (CLI artifacts and VSIX)](https://github.com/opsdevcode/specmint-language/releases)
 - [Language](../specification/mint/v0/language.md)
 - [Why Mint is not Terraform](why-not-terraform.md)
 - [MintIR](../specification/mint/v0/ir.md)
@@ -29,5 +30,8 @@ docs: <https://opsdevcode.github.io/specmint-language/>.
 - [SpecMint Platform](https://github.com/opsdevcode/specmint-platform)
 - [Product page](https://opsdevco.de/products/mint)
 
-`mint apply` is not part of this extract. SpecMint is the governed
-runtime. The hosted service stays private.
+Install the CLI with `pipx install specmint` or `uv tool install specmint`.
+Install the editor from the VSIX on GitHub Releases. VS Code Marketplace
+and Open VSX publication is deferred. `mint apply` is not part of this
+extract. SpecMint is the governed runtime. The hosted service stays
+private.

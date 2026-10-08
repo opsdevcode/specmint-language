@@ -19,7 +19,8 @@ It is not a delivery schedule.
 - Live AWS, Azure, GCP, Kubernetes, GitHub, or SaaS mutation from Mint
 - `mint apply`
 - Custom docs hostname `mint.opsdevco.de` until DNS/hosting is owned
-- GitHub Pages for this repository (org currently disables Pages)
+- VS Code Marketplace and Open VSX publication (GitHub Releases are the
+  canonical VSIX source)
 - A 1.0 or production-ready release
 
 The next community program after this launch is integration authoring

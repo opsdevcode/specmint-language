@@ -25,5 +25,6 @@ forbidden are already refused.
 - CUE evaluation of caller-supplied programs
 - production-ready or 1.0 claims
 
-Pin a release by Git tag (`v0.1.x-alpha.N`) and artifact SHA-256. There
-is no `latest` tag.
+Pin a release by Git tag (`v0.x.y-alpha.N`) and artifact SHA-256 from
+the GitHub prerelease. There is no `latest` tag. The VSIX is that
+release asset, not a marketplace listing.

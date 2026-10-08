@@ -81,11 +81,23 @@ package. Planning never grants execution authority.
 - [Contributing](CONTRIBUTING.md)
 - [Docs index](docs/index.md)
 
-## VS Code
+## Editor (VS Code / Cursor)
 
-Publisher id: `opsdevcode.mint-language`. GitHub Releases attach the VSIX
-built for this tag. The release workflow publishes that same VSIX to
-VS Code Marketplace and Open VSX.
+Publisher id: `opsdevcode.mint-language`. Install the VSIX from the newest
+GitHub prerelease. There is no `latest` tag.
+
+[GitHub Releases](https://github.com/opsdevcode/specmint-language/releases)
+
+1. Download `mint-language-*.vsix` and `SHA256SUMS` from that prerelease.
+2. Verify the VSIX against `SHA256SUMS` (`sha256sum -c SHA256SUMS`).
+3. VS Code: Command Palette → Extensions: Install from VSIX…, or
+   `code --install-extension mint-language-*.vsix`
+4. Cursor: Command Palette → Extensions: Install from VSIX…, or
+   `cursor --install-extension mint-language-*.vsix`
+
+VS Code Marketplace and Open VSX publication is deferred. GitHub Releases
+are the canonical VSIX source. The language CLI stays offline; there is
+no `mint editor install` and no `mint apply`.
 
 ## License
 
