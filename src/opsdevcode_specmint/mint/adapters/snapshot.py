@@ -10,6 +10,7 @@ from typing import Any
 
 from opsdevcode_specmint.mint.adapters.types import content_digest
 from opsdevcode_specmint.mint.catalog import REPO_GITHUB_KIND
+from opsdevcode_specmint.mint.diagnostics import display_path
 from opsdevcode_specmint.mint.errors import coded_error
 from opsdevcode_specmint.mint.ir import canonical_json_bytes
 
@@ -52,7 +53,9 @@ def load_snapshot_file(path: Path) -> RepositorySnapshot:
     if not path.is_file():
         raise coded_error(
             "MINT_SNAPSHOT",
-            f"missing repository snapshot {path}; pass an explicit snapshot JSON path",
+            f"missing repository snapshot {display_path(path)}; "
+            "pass an explicit snapshot JSON path",
+            snapshot={"path": display_path(path), "supplied": 0},
         )
     try:
         raw = path.read_text(encoding="utf-8")
@@ -179,14 +182,18 @@ def bind_snapshots(
         raise coded_error(
             "MINT_SNAPSHOT",
             "missing repository snapshot; pass --snapshot PATH for each repo.github target",
+            snapshot={"kind": REPO_GITHUB_KIND, "required": True, "supplied": 0},
         )
     seen: dict[tuple[str, str], RepositorySnapshot] = {}
     for item in typed:
         if item.identity in seen:
             raise coded_error(
                 "MINT_SNAPSHOT",
-                f"duplicate repository snapshot for {item.identity[0]}/{item.identity[1]}; "
-                f"{seen[item.identity].path} and {item.path}",
+                f"duplicate repository snapshot for {item.identity[0]}/{item.identity[1]}",
+                snapshot={
+                    "identity": f"{item.identity[0]}/{item.identity[1]}",
+                    "duplicate": True,
+                },
             )
         seen[item.identity] = item
     bound: dict[tuple[str, str], RepositorySnapshot] = {}

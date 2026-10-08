@@ -11,6 +11,10 @@ class SourceSpan:
     line: int
     column: int
     unit: str = "root"
+    end_line: int | None = None
+    end_column: int | None = None
+    start_offset: int | None = None
+    end_offset: int | None = None
 
 
 @dataclass(frozen=True, slots=True)

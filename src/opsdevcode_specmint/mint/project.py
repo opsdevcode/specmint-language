@@ -16,6 +16,7 @@ from opsdevcode_specmint.mint.compile import SourceUnit, compile_program
 from opsdevcode_specmint.mint.errors import MintError, coded_error
 from opsdevcode_specmint.mint.inputs import DeclaredProgram, extension_from_dict
 from opsdevcode_specmint.mint.ir import MintIR, canonical_json_bytes
+from opsdevcode_specmint.mint.templates import DEFAULT_TEMPLATE, load_template
 
 PROJECT_SCHEMA = "mint.project/v0"
 LOCK_SCHEMA = "mint.lock/v0"
@@ -33,20 +34,6 @@ _CREDENTIAL_KEYS = frozenset(
         "token",
     }
 )
-_STARTER = """\
-mint v0
-
-automation as-local-marker-1 {
-  owner "platform@opsdevcode.com"
-  intent "Ensure a sandbox marker exists after an authorized plan"
-  use local.sandbox.ensure_marker v1alpha1
-  sandbox fixture-alpha
-  evidence marker.present
-  require authorization
-  forbid mutation
-  status draft
-}
-"""
 
 
 @dataclass(frozen=True, slots=True)
@@ -176,7 +163,7 @@ def discover_manifest(start: Path) -> Path:
     if not current.exists():
         raise coded_error(
             "MINT_PROJECT",
-            f"missing start path {current}; pass an existing directory to mint --project",
+            "missing start path; pass an existing directory to mint --project",
         )
     resolved = current.resolve()
     if resolved.is_file():
@@ -187,7 +174,7 @@ def discover_manifest(start: Path) -> Path:
             return candidate
     raise coded_error(
         "MINT_PROJECT",
-        f"missing {MANIFEST_NAME} under {resolved}; run mint init or pass --project",
+        f"missing {MANIFEST_NAME} under this directory; run mint init or pass --project",
     )
 
 
@@ -195,14 +182,15 @@ def load_manifest(path: Path) -> ProjectManifest:
     if not path.is_file():
         raise coded_error(
             "MINT_PROJECT",
-            f"missing {path}; run mint init or pass --project to a {MANIFEST_NAME} directory",
+            f"missing {MANIFEST_NAME}; run mint init or pass --project to a "
+            f"{MANIFEST_NAME} directory",
         )
     try:
         raw = tomllib.loads(path.read_text(encoding="utf-8"))
     except tomllib.TOMLDecodeError as exc:
-        raise coded_error("MINT_PROJECT", f"fix {path}: {exc}") from exc
+        raise coded_error("MINT_PROJECT", f"fix {MANIFEST_NAME}: {exc}") from exc
     if not isinstance(raw, dict):
-        raise coded_error("MINT_PROJECT", f"set {path} to a TOML table")
+        raise coded_error("MINT_PROJECT", f"set {MANIFEST_NAME} to a TOML table")
     allowed = {
         "schema",
         "name",
@@ -277,14 +265,19 @@ def load_manifest(path: Path) -> ProjectManifest:
     )
 
 
-def init_project(directory: Path, *, name: str | None = None) -> ProjectManifest:
+def init_project(
+    directory: Path,
+    *,
+    name: str | None = None,
+    template: str | None = None,
+) -> ProjectManifest:
     target = directory.expanduser().resolve()
     target.mkdir(parents=True, exist_ok=True)
     manifest_path = target / MANIFEST_NAME
     if manifest_path.is_file():
         raise coded_error(
             "MINT_PROJECT",
-            f"{manifest_path} already exists; keep it or choose another directory",
+            f"{MANIFEST_NAME} already exists; keep it or choose another directory",
         )
     project_name = name or _default_name(target)
     if not _NAME.fullmatch(project_name):
@@ -292,21 +285,21 @@ def init_project(directory: Path, *, name: str | None = None) -> ProjectManifest
             "MINT_PROJECT",
             "set project name to a lowercase DNS-label like local-marker",
         )
+    chosen = load_template(template or DEFAULT_TEMPLATE)
     unit = "main.mint"
+    profile_block = f"\n{chosen.manifest_profiles}" if chosen.manifest_profiles else ""
     text = (
         f'schema = "{PROJECT_SCHEMA}"\n'
         f'name = "{project_name}"\n'
         f'edition = "v0"\n'
         f'root = "{unit}"\n'
         f'units = ["{unit}"]\n'
-        "\n"
-        "[profiles.local]\n"
-        'targets = ["fixture-alpha"]\n'
+        f"{profile_block}"
     )
     _atomic_write_text(manifest_path, text)
     starter = target / unit
     if not starter.exists():
-        _atomic_write_text(starter, _STARTER)
+        _atomic_write_text(starter, chosen.mint_source)
     return load_manifest(manifest_path)
 
 

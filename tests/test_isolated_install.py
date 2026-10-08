@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tarfile
 import zipfile
 from pathlib import Path
@@ -18,7 +19,7 @@ REPO = Path(__file__).resolve().parents[1]
 def test_sdist_and_wheel_install_isolated(tmp_path: Path) -> None:
     builder = tmp_path / "builder"
     subprocess.run(
-        ["python3", "-m", "venv", str(builder)],
+        [sys.executable, "-m", "venv", str(builder)],
         check=True,
         capture_output=True,
         text=True,
@@ -46,7 +47,9 @@ def test_sdist_and_wheel_install_isolated(tmp_path: Path) -> None:
 
     for artifact in (sdist, wheel):
         isolated = tmp_path / f"iso-{artifact.suffixes[0].strip('.')}"
-        subprocess.run(["python3", "-m", "venv", str(isolated)], check=True, capture_output=True)
+        subprocess.run(
+            [sys.executable, "-m", "venv", str(isolated)], check=True, capture_output=True
+        )
         iso_py = isolated / "bin" / "python"
         install = subprocess.run(
             [str(iso_py), "-m", "pip", "install", "--disable-pip-version-check", str(artifact)],
@@ -85,7 +88,7 @@ def test_pipx_and_uv_install_from_wheel(tmp_path: Path) -> None:
         pytest.skip("pipx and uv are not on PATH in this environment")
 
     builder = tmp_path / "builder"
-    subprocess.run(["python3", "-m", "venv", str(builder)], check=True, capture_output=True)
+    subprocess.run([sys.executable, "-m", "venv", str(builder)], check=True, capture_output=True)
     py = builder / "bin" / "python"
     subprocess.run(
         [str(py), "-m", "pip", "install", "--disable-pip-version-check", "build==1.2.2"],

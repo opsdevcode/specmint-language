@@ -61,8 +61,8 @@ package. Planning never grants execution authority.
 
 ## Language commands
 
-`check` `compile` `convert` `fmt` `inspect` `init` `lock` `lsp` `plan`
-`project` `integrations` `adapters` `repository` `version`
+`check` `compile` `convert` `doctor` `fmt` `inspect` `init` `lock` `lsp`
+`plan` `project` `integrations` `adapters` `repository` `version`
 
 `compile` emits canonical MintIR. `plan` is snapshot-driven and offline.
 `mint apply` is not implemented.

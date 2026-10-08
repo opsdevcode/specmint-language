@@ -24,6 +24,7 @@ class Token:
     text: str
     line: int
     column: int
+    start_offset: int = 0
 
 
 class Lexer:
@@ -39,28 +40,37 @@ class Lexer:
         while True:
             self._skip_trivia()
             if self._at_end():
-                tokens.append(Token(TokenKind.EOF, "", self._line, self._column))
+                tokens.append(
+                    Token(TokenKind.EOF, "", self._line, self._column, start_offset=self._index)
+                )
                 return tuple(tokens)
             tokens.append(self._next_token())
 
     def _next_token(self) -> Token:
         line, column = self._line, self._column
+        start_offset = self._index
         ch = self._peek()
         if ch == "{":
             self._advance()
-            return Token(TokenKind.LBRACE, "{", line, column)
+            return Token(TokenKind.LBRACE, "{", line, column, start_offset=start_offset)
         if ch == "}":
             self._advance()
-            return Token(TokenKind.RBRACE, "}", line, column)
+            return Token(TokenKind.RBRACE, "}", line, column, start_offset=start_offset)
         if ch == ",":
             self._advance()
-            return Token(TokenKind.COMMA, ",", line, column)
+            return Token(TokenKind.COMMA, ",", line, column, start_offset=start_offset)
         if ch == '"':
-            return Token(TokenKind.STRING, self._read_string(), line, column)
+            return Token(
+                TokenKind.STRING, self._read_string(), line, column, start_offset=start_offset
+            )
         if ch.isdigit():
-            return Token(TokenKind.NUMBER, self._read_number(), line, column)
+            return Token(
+                TokenKind.NUMBER, self._read_number(), line, column, start_offset=start_offset
+            )
         if _is_ident_start(ch):
-            return Token(TokenKind.IDENT, self._read_ident(), line, column)
+            return Token(
+                TokenKind.IDENT, self._read_ident(), line, column, start_offset=start_offset
+            )
         raise parse_error(
             line,
             column,
