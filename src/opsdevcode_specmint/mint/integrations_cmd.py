@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, TextIO
 
 from opsdevcode_specmint.integration.canonical import canonical_json_bytes
-from opsdevcode_specmint.integration.harness import run_integration_test
+from opsdevcode_specmint.integration.harness import load_kit_fixtures, run_integration_test
 from opsdevcode_specmint.integration.models import parse_manifest, realization_document
 from opsdevcode_specmint.integration.reference_server import (
     IDENTITY,
@@ -26,6 +26,7 @@ from opsdevcode_specmint.mint.adapters.types import AdapterManifest
 from opsdevcode_specmint.mint.discovery import (
     add_integration,
     inspect_integration,
+    refuse_network_source,
     remove_integration,
     search_integrations,
     verify_integrations,
@@ -195,12 +196,17 @@ def _resolve(args: Any, *, stdout: TextIO) -> int:
 
 
 def _conformance(args: Any, *, stdout: TextIO) -> int:
+    local = getattr(args, "local", "") or ""
+    if local:
+        report = _local_conformance(local)
+        stdout.write(json.dumps(report, indent=2, sort_keys=True) + "\n")
+        return 0
     server = Path(reference_server_path())
     identity = getattr(args, "integration", None) or IDENTITY
-    if identity not in {IDENTITY, str(server)}:
+    if identity not in {IDENTITY, str(server), ""}:
         raise coded_error(
             "MINT_INTEGRATION",
-            f"conformance reference is {IDENTITY}",
+            f"conformance reference is {IDENTITY}; pass --local for another integration",
         )
     report = run_integration_test(
         [sys.executable, str(server)],
@@ -210,6 +216,45 @@ def _conformance(args: Any, *, stdout: TextIO) -> int:
     )
     stdout.write(json.dumps(report, indent=2, sort_keys=True) + "\n")
     return 0
+
+
+def _local_conformance(raw: str) -> dict[str, Any]:
+    refuse_network_source(raw, label="test --local")
+    path = Path(raw)
+    root = path.parent if path.is_file() else path
+    manifest_path = (
+        root / "mint-integration.json" if path.is_dir() or path.suffix != ".json" else path
+    )
+    if path.is_file() and path.name.endswith(".json"):
+        manifest_path = path
+        root = path.parent
+    if not manifest_path.is_file() or manifest_path.is_symlink():
+        raise coded_error(
+            "MINT_INTEGRATION",
+            "pass --local to a mint-integration.json file or its directory",
+        )
+    try:
+        manifest = parse_manifest(json.loads(manifest_path.read_text(encoding="utf-8")))
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
+        raise coded_error(
+            "MINT_INTEGRATION",
+            f"{manifest_path.name} must be mint.integration/v0 JSON",
+        ) from exc
+    server = root / "implementation" / "reference_server.py"
+    if server.is_symlink() or not server.is_file():
+        raise coded_error(
+            "MINT_INTEGRATION",
+            "local integration artifact must be implementation/reference_server.py",
+        )
+    fixtures_dir = root / "fixtures"
+    fixtures = load_kit_fixtures(directory=fixtures_dir) if fixtures_dir.is_dir() else None
+    return run_integration_test(
+        [sys.executable, str(server)],
+        artifact_bytes=server.read_bytes(),
+        identity=manifest.identity,
+        version=manifest.version,
+        fixtures=fixtures,
+    )
 
 
 def reference_server_path() -> str:

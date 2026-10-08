@@ -17,6 +17,8 @@ docs: <https://opsdevcode.github.io/specmint-language/>.
 - [Conversion](../specification/mint/v0/conversion.md)
 - [Integration Protocol v0](../specification/mint/v0/integration-protocol.md)
 - [Building an integration](../specification/mint/v0/integration-authoring.md)
+- [Build a Mint integration (tutorial)](build-an-integration.md)
+- [Community governance](community.md)
 - [Integration trust](../specification/mint/v0/integration-trust.md)
 - [Adapters (deprecated alias)](../specification/mint/v0/adapters.md)
 - [Repository snapshots](../specification/mint/v0/repository-snapshot.md)

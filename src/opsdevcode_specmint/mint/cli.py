@@ -542,7 +542,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     verify_integration.add_argument("--project", required=True)
     conformance = integrations_sub.add_parser("conformance", help="Alias of mint integrations test")
-    conformance.add_argument("integration")
+    conformance.add_argument("integration", nargs="?", default="")
+    conformance.add_argument(
+        "--local",
+        default="",
+        help="Local integration directory or mint-integration.json; never a URL",
+    )
     test_cmd = integrations_sub.add_parser(
         "test", help="Run the observe/plan/verify/evidence conformance kit"
     )
@@ -550,6 +555,11 @@ def _build_parser() -> argparse.ArgumentParser:
         "integration",
         nargs="?",
         help="Integration identity (default: local.sandbox.ensure_marker)",
+    )
+    test_cmd.add_argument(
+        "--local",
+        default="",
+        help="Local integration directory or mint-integration.json; never a URL",
     )
     adapters_cmd = sub.add_parser("adapters", help="Deprecated alias of mint integrations")
     adapters_sub = adapters_cmd.add_subparsers(dest="adapters_command")
