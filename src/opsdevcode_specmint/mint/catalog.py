@@ -46,6 +46,35 @@ class CapabilityDecl:
     support: str = SUPPORT_FULL
 
 
+@dataclass(frozen=True, slots=True)
+class CatalogIntegration:
+    identity: str
+    version: str
+    name: str
+    summary: str
+    capabilities: tuple[tuple[str, str], ...]
+    target_kinds: tuple[str, ...]
+    phases: tuple[str, ...]
+    execution_support: str
+    origin: str
+
+    def to_record(self) -> dict[str, Any]:
+        return {
+            "capabilities": [
+                {"id": capability_id, "version": capability_version}
+                for capability_id, capability_version in self.capabilities
+            ],
+            "executionSupport": self.execution_support,
+            "identity": self.identity,
+            "name": self.name,
+            "origin": self.origin,
+            "phases": list(self.phases),
+            "summary": self.summary,
+            "targetKinds": list(self.target_kinds),
+            "version": self.version,
+        }
+
+
 def catalog_records_path() -> Path:
     return Path(__file__).with_name("catalog_records") / "v0.json"
 
@@ -113,9 +142,84 @@ def _capabilities_from_records(document: dict[str, Any]) -> tuple[CapabilityDecl
     return tuple(capabilities)
 
 
+def _integrations_from_records(document: dict[str, Any]) -> tuple[CatalogIntegration, ...]:
+    items = document.get("integrations", [])
+    if items in (None, []):
+        return ()
+    if not isinstance(items, list):
+        raise catalog_error("catalog records integrations must be an array")
+    integrations: list[CatalogIntegration] = []
+    seen: set[tuple[str, str]] = set()
+    for item in items:
+        if not isinstance(item, dict):
+            raise catalog_error("each catalog integration record must be an object")
+        allowed = {
+            "capabilities",
+            "executionSupport",
+            "identity",
+            "name",
+            "origin",
+            "phases",
+            "summary",
+            "targetKinds",
+            "version",
+        }
+        unknown = sorted(set(item) - allowed)
+        if unknown:
+            raise catalog_error(f"remove unknown catalog integration keys {unknown}")
+        identity = str(item.get("identity", ""))
+        version = str(item.get("version", ""))
+        origin = str(item.get("origin", ""))
+        if origin not in {"packaged", "local"}:
+            raise catalog_error(
+                f"catalog integration {identity or 'record'} origin must be packaged or local"
+            )
+        capabilities_raw = item.get("capabilities")
+        kinds_raw = item.get("targetKinds")
+        phases_raw = item.get("phases")
+        if (
+            not identity
+            or not version
+            or not isinstance(capabilities_raw, list)
+            or not capabilities_raw
+            or not isinstance(kinds_raw, list)
+            or not kinds_raw
+            or not isinstance(phases_raw, list)
+            or not phases_raw
+        ):
+            raise catalog_error(
+                "catalog integration records need identity, version, capabilities, "
+                "targetKinds, and phases"
+            )
+        key = (identity, version)
+        if key in seen:
+            raise catalog_error(f"duplicate catalog integration {identity} {version}")
+        seen.add(key)
+        capabilities: list[tuple[str, str]] = []
+        for capability in capabilities_raw:
+            if not isinstance(capability, dict):
+                raise catalog_error(f"catalog integration {identity} capabilities must be objects")
+            capabilities.append((str(capability.get("id", "")), str(capability.get("version", ""))))
+        integrations.append(
+            CatalogIntegration(
+                identity=identity,
+                version=version,
+                name=str(item.get("name", "")),
+                summary=str(item.get("summary", "")),
+                capabilities=tuple(capabilities),
+                target_kinds=tuple(str(kind) for kind in kinds_raw),
+                phases=tuple(str(phase) for phase in phases_raw),
+                execution_support=str(item.get("executionSupport", "")),
+                origin=origin,
+            )
+        )
+    return tuple(sorted(integrations, key=lambda item: (item.identity, item.version)))
+
+
 _RECORDS = load_catalog_records()
 TARGET_KINDS: tuple[TargetKind, ...] = _target_kinds_from_records(_RECORDS)
 CAPABILITIES: tuple[CapabilityDecl, ...] = _capabilities_from_records(_RECORDS)
+INTEGRATIONS: tuple[CatalogIntegration, ...] = _integrations_from_records(_RECORDS)
 ENSURE_MARKER = CatalogEntry(ENSURE_MARKER_TYPE, ENSURE_MARKER_VERSION)
 CATALOG: frozenset[CatalogEntry] = frozenset({ENSURE_MARKER})
 
@@ -149,3 +253,40 @@ def target_kind(kind: str) -> TargetKind | None:
 
 def sorted_catalog_ids() -> tuple[str, ...]:
     return tuple(sorted(f"{item.capability_type}@{item.version}" for item in CAPABILITIES))
+
+
+def catalog_integration(identity: str, version: str | None = None) -> CatalogIntegration | None:
+    matches = [item for item in INTEGRATIONS if item.identity == identity]
+    if version:
+        matches = [item for item in matches if item.version == version]
+    if len(matches) == 1:
+        return matches[0]
+    return None
+
+
+def search_catalog_integrations(
+    *,
+    query: str = "",
+    capability: str = "",
+    target_kind_filter: str = "",
+) -> tuple[CatalogIntegration, ...]:
+    needle = query.strip().lower()
+    found: list[CatalogIntegration] = []
+    for item in INTEGRATIONS:
+        haystack = " ".join(
+            [
+                item.identity,
+                item.name,
+                item.summary,
+                " ".join(kind for kind in item.target_kinds),
+                " ".join(capability_id for capability_id, _version in item.capabilities),
+            ]
+        ).lower()
+        if needle and needle not in haystack:
+            continue
+        if capability and capability not in {ident for ident, _version in item.capabilities}:
+            continue
+        if target_kind_filter and target_kind_filter not in item.target_kinds:
+            continue
+        found.append(item)
+    return tuple(found)

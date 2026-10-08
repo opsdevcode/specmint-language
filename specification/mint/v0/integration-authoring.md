@@ -30,6 +30,21 @@ mint integrations test local.sandbox.ensure_marker
 `verify`, and `evidence` from local fixtures, and requires `execute` to
 fail closed. Execution stays in the SpecMint lifecycle.
 
+Discovery stays offline:
+
+```
+mint integrations search local.sandbox
+mint integrations inspect local.sandbox.ensure_marker
+mint integrations add --project . local.sandbox.ensure_marker
+mint integrations verify --project .
+mint integrations remove --project . local.sandbox.ensure_marker
+```
+
+`add` binds `manifestDigest` and `artifactDigest` in `mint.lock`. It
+does not pip-install or execute the integration. Pass `--local` only for
+a project-relative `mint.integration/v0` file. See
+[ADR 020](../../../docs/adr/020-integration-discovery.md).
+
 Public SDK entry points are documented in
 [ADR 019](../../../docs/adr/019-mint-integration-sdk.md):
 `load_manifest_file` and versioned stdio JSON-RPC.

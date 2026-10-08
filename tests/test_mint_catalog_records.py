@@ -6,9 +6,12 @@ from opsdevcode_specmint.mint.catalog import (
     CAPABILITIES,
     CATALOG_RECORDS_SCHEMA,
     ENSURE_MARKER_TYPE,
+    INTEGRATIONS,
     TARGET_KINDS,
     capability_for,
+    catalog_integration,
     load_catalog_records,
+    search_catalog_integrations,
     sorted_catalog_ids,
     target_kind,
 )
@@ -48,6 +51,19 @@ def test_loaded_records_match_runtime_catalog() -> None:
         "repo.github",
         "sandbox",
     }
+
+
+def test_catalog_records_include_packaged_reference() -> None:
+    document = load_catalog_records()
+    assert "integrations" in document
+    found = catalog_integration(ENSURE_MARKER_TYPE, "0.1.0")
+    assert found is not None
+    assert found.origin == "packaged"
+    assert found.execution_support == "fake"
+    assert "execute" not in found.phases
+    matches = search_catalog_integrations(query="sandbox", target_kind_filter="local.sandbox")
+    assert found in matches
+    assert {item.identity for item in INTEGRATIONS} == {ENSURE_MARKER_TYPE}
 
 
 def first_capability_ids() -> set[str]:

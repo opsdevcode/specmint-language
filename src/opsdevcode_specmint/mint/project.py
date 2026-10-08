@@ -331,6 +331,57 @@ def write_lockfile(manifest: ProjectManifest, lockfile: Lockfile) -> None:
     _atomic_write_bytes(manifest.lock_path, lockfile.canonical_bytes())
 
 
+def render_manifest(manifest: ProjectManifest) -> str:
+    lines = [
+        f'schema = "{manifest.schema}"',
+        f'name = "{manifest.name}"',
+        f'edition = "{manifest.edition}"',
+        f'root = "{manifest.root}"',
+        f"units = {_toml_string_array(manifest.units)}",
+    ]
+    if manifest.catalogs:
+        lines.append(f"catalogs = {_toml_string_array(manifest.catalogs)}")
+    for relative in manifest.extension_paths:
+        lines.extend(["", "[[extensions]]", f'path = "{relative}"'])
+    for profile in manifest.profiles:
+        lines.extend(
+            [
+                "",
+                f"[profiles.{profile.name}]",
+                f"targets = {_toml_string_array(profile.targets)}",
+            ]
+        )
+    for item in manifest.integrations:
+        lines.extend(
+            [
+                "",
+                "[[integrations]]",
+                f'source = "{item.source}"',
+                f'version = "{item.version}"',
+            ]
+        )
+        if item.local:
+            lines.append(f'local = "{item.local}"')
+        lines.extend(
+            [
+                f"capabilities = {_toml_string_array(item.capabilities)}",
+                f"targets = {_toml_string_array(item.targets)}",
+                f"phases = {_toml_string_array(item.phases)}",
+            ]
+        )
+        if item.realization:
+            lines.append(f'realization = "{item.realization}"')
+    return "\n".join(lines) + "\n"
+
+
+def write_manifest(manifest: ProjectManifest) -> None:
+    _atomic_write_text(manifest.path, render_manifest(manifest))
+
+
+def _toml_string_array(items: tuple[str, ...]) -> str:
+    return "[" + ", ".join(f'"{item}"' for item in items) + "]"
+
+
 def load_lockfile(path: Path) -> Lockfile:
     if not path.is_file():
         raise coded_error(

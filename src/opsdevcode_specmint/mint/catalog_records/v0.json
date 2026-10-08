@@ -61,6 +61,21 @@
       "version": "v1alpha1"
     }
   ],
+  "integrations": [
+    {
+      "capabilities": [
+        {"id": "local.sandbox.ensure_marker", "version": "v1alpha1"}
+      ],
+      "executionSupport": "fake",
+      "identity": "local.sandbox.ensure_marker",
+      "name": "ensure_marker",
+      "origin": "packaged",
+      "phases": ["describe", "evidence", "observe", "plan", "validate", "verify"],
+      "summary": "Observe, plan, verify, and evidence a local sandbox marker. Execute is refused.",
+      "targetKinds": ["local.sandbox", "sandbox"],
+      "version": "0.1.0"
+    }
+  ],
   "schema": "mint.catalog-records/v0",
   "targetKinds": [
     {"fields": [["account", "string"], ["region", "string"]], "kind": "aws.account"},

@@ -502,10 +502,16 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     integrations_cmd = sub.add_parser(
         "integrations",
-        help="List, inspect, check, resolve, and test Mint integrations",
+        help="Search, inspect, pin, verify, and test Mint integrations",
     )
     integrations_sub = integrations_cmd.add_subparsers(dest="integrations_command")
     integrations_sub.add_parser("list", help="List builtin integration identities")
+    search_integration = integrations_sub.add_parser(
+        "search", help="Search local catalog records without network"
+    )
+    search_integration.add_argument("query", nargs="?", default="", help="Substring filter")
+    search_integration.add_argument("--capability", default="", help="Capability id filter")
+    search_integration.add_argument("--target-kind", default="", help="Target kind filter")
     inspect_integration = integrations_sub.add_parser("inspect", help="Inspect one integration")
     inspect_integration.add_argument("identity")
     check_integration = integrations_sub.add_parser("check", help="Validate a manifest file")
@@ -517,6 +523,24 @@ def _build_parser() -> argparse.ArgumentParser:
     resolve_integration.add_argument("--target", required=True)
     resolve_integration.add_argument("--target-kind", required=True)
     resolve_integration.add_argument("--phase", required=True)
+    add_integration = integrations_sub.add_parser(
+        "add",
+        help="Pin a local or packaged integration; never pip or execute",
+    )
+    add_integration.add_argument("identity", nargs="?", default="", help="Packaged identity")
+    add_integration.add_argument("--project", required=True)
+    add_integration.add_argument(
+        "--local",
+        default="",
+        help="Project-relative mint.integration/v0 path; never a URL",
+    )
+    remove_integration = integrations_sub.add_parser("remove", help="Unpin one project integration")
+    remove_integration.add_argument("identity")
+    remove_integration.add_argument("--project", required=True)
+    verify_integration = integrations_sub.add_parser(
+        "verify", help="Recompute lockfile integration digests without executing"
+    )
+    verify_integration.add_argument("--project", required=True)
     conformance = integrations_sub.add_parser("conformance", help="Alias of mint integrations test")
     conformance.add_argument("integration")
     test_cmd = integrations_sub.add_parser(

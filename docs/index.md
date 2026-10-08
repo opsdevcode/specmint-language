@@ -27,6 +27,7 @@ docs: <https://opsdevcode.github.io/specmint-language/>.
 - [Contributing](../CONTRIBUTING.md)
 - [ADR 018: integration terminology](adr/018-mint-integration-terminology.md)
 - [ADR 019: integration SDK](adr/019-mint-integration-sdk.md)
+- [ADR 020: integration discovery](adr/020-integration-discovery.md)
 - [Language source](https://github.com/opsdevcode/specmint-language)
 - [SpecMint Platform](https://github.com/opsdevcode/specmint-platform)
 - [Product page](https://opsdevco.de/products/mint)
