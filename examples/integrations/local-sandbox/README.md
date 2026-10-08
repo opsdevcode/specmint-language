@@ -8,7 +8,7 @@ Execution is a privileged phase. This integration declares
 `executionSupport: fake` and refuses `execute`. SpecMint's local executor
 performs the approved marker write inside an explicit sandbox.
 
-Conformance: `mint integrations conformance local.sandbox.ensure_marker`.
+Conformance: `mint integrations test local.sandbox.ensure_marker`.
 
 Digests are SHA-256 of canonical JSON or of `reference_server.py` bytes.
 Configuration is an empty object. Tokens are refused.

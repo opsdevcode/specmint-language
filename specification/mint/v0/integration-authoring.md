@@ -22,11 +22,17 @@ mutate the host.
 ## Conformance
 
 ```
-mint integrations conformance local.sandbox.ensure_marker
+mint integrations test local.sandbox.ensure_marker
 ```
 
-The harness negotiates `mint.protocol/v0`, checks `describe`, and
-requires `execute` to fail closed.
+`mint integrations conformance` is an alias. The kit negotiates
+`mint.protocol/v0`, checks `describe`, drives `observe`, `plan`,
+`verify`, and `evidence` from local fixtures, and requires `execute` to
+fail closed. Execution stays in the SpecMint lifecycle.
+
+Public SDK entry points are documented in
+[ADR 019](../../../docs/adr/019-mint-integration-sdk.md):
+`load_manifest_file` and versioned stdio JSON-RPC.
 
 ## Digests
 

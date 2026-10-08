@@ -39,7 +39,12 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-opsdevcode_specmint = ["py.typed", "integration/schemas/*.json"]
+opsdevcode_specmint = [
+  "py.typed",
+  "integration/schemas/*.json",
+  "integration/fixtures/*.json",
+  "mint/catalog_records/*.json",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

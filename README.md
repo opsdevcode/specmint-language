@@ -56,6 +56,7 @@ package. Planning never grants execution authority.
 - [Authoring an integration](specification/mint/v0/integration-authoring.md)
 - [Trust and permissions](specification/mint/v0/integration-trust.md)
 - [ADR 018](docs/adr/018-mint-integration-terminology.md)
+- [ADR 019](docs/adr/019-mint-integration-sdk.md)
 
 `mint adapters` is a deprecated alpha alias of `mint integrations`.
 

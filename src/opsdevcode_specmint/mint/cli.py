@@ -502,7 +502,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     integrations_cmd = sub.add_parser(
         "integrations",
-        help="List, inspect, check, resolve, and conformance-test Mint integrations",
+        help="List, inspect, check, resolve, and test Mint integrations",
     )
     integrations_sub = integrations_cmd.add_subparsers(dest="integrations_command")
     integrations_sub.add_parser("list", help="List builtin integration identities")
@@ -517,8 +517,16 @@ def _build_parser() -> argparse.ArgumentParser:
     resolve_integration.add_argument("--target", required=True)
     resolve_integration.add_argument("--target-kind", required=True)
     resolve_integration.add_argument("--phase", required=True)
-    conformance = integrations_sub.add_parser("conformance", help="Run reference conformance")
+    conformance = integrations_sub.add_parser("conformance", help="Alias of mint integrations test")
     conformance.add_argument("integration")
+    test_cmd = integrations_sub.add_parser(
+        "test", help="Run the observe/plan/verify/evidence conformance kit"
+    )
+    test_cmd.add_argument(
+        "integration",
+        nargs="?",
+        help="Integration identity (default: local.sandbox.ensure_marker)",
+    )
     adapters_cmd = sub.add_parser("adapters", help="Deprecated alias of mint integrations")
     adapters_sub = adapters_cmd.add_subparsers(dest="adapters_command")
     adapters_sub.add_parser("list", help="Print builtin AdapterManifest documents")
