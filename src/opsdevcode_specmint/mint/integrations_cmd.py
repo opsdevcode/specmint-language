@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, TextIO
 
 from opsdevcode_specmint.integration.canonical import canonical_json_bytes
-from opsdevcode_specmint.integration.harness import run_conformance
+from opsdevcode_specmint.integration.harness import run_integration_test
 from opsdevcode_specmint.integration.models import parse_manifest, realization_document
 from opsdevcode_specmint.integration.reference_server import (
     IDENTITY,
@@ -101,11 +101,11 @@ def run_integrations(args: Any, *, stdout: TextIO, stderr: TextIO) -> int:
         return 0
     if command == "resolve":
         return _resolve(args, stdout=stdout)
-    if command == "conformance":
+    if command in {"conformance", "test"}:
         return _conformance(args, stdout=stdout)
     raise coded_error(
         "MINT_INTEGRATION",
-        "mint integrations accepts list, inspect, check, resolve, or conformance",
+        "mint integrations accepts list, inspect, check, resolve, conformance, or test",
     )
 
 
@@ -154,17 +154,18 @@ def _resolve(args: Any, *, stdout: TextIO) -> int:
 
 def _conformance(args: Any, *, stdout: TextIO) -> int:
     server = Path(reference_server_path())
-    report = run_conformance(
+    identity = getattr(args, "integration", None) or IDENTITY
+    if identity not in {IDENTITY, str(server)}:
+        raise coded_error(
+            "MINT_INTEGRATION",
+            f"conformance reference is {IDENTITY}",
+        )
+    report = run_integration_test(
         [sys.executable, str(server)],
         artifact_bytes=server.read_bytes(),
         identity=IDENTITY,
         version=VERSION,
     )
-    if args.integration not in {IDENTITY, str(server)}:
-        raise coded_error(
-            "MINT_INTEGRATION",
-            f"conformance reference is {IDENTITY}",
-        )
     stdout.write(json.dumps(report, indent=2, sort_keys=True) + "\n")
     return 0
 

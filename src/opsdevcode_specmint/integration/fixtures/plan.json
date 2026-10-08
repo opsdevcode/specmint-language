@@ -1,0 +1,7 @@
+{
+  "observationDigest": "sha256:0",
+  "target": {
+    "id": "fixture-alpha",
+    "kind": "local.sandbox"
+  }
+}

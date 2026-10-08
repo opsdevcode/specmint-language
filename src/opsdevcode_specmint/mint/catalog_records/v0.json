@@ -1,0 +1,75 @@
+{
+  "capabilities": [
+    {
+      "id": "aws.account.audit",
+      "support": "partial",
+      "targetKinds": ["aws.account"],
+      "version": "v1alpha1"
+    },
+    {
+      "id": "aws.iam.constraint",
+      "support": "full",
+      "targetKinds": ["aws.account"],
+      "version": "v1alpha1"
+    },
+    {
+      "id": "gcp.iam.constraint",
+      "support": "full",
+      "targetKinds": ["gcp.project"],
+      "version": "v1alpha1"
+    },
+    {
+      "id": "k8s.workload.pod_security",
+      "support": "full",
+      "targetKinds": ["k8s.workload"],
+      "version": "v1alpha1"
+    },
+    {
+      "id": "local.dev.ensure_workspace",
+      "support": "full",
+      "targetKinds": ["local.dev"],
+      "version": "v1alpha1"
+    },
+    {
+      "id": "local.sandbox.ensure_marker",
+      "support": "full",
+      "targetKinds": ["local.sandbox", "sandbox"],
+      "version": "v1alpha1"
+    },
+    {
+      "id": "repo.branch_protection",
+      "support": "full",
+      "targetKinds": ["repo.github"],
+      "version": "v1alpha1"
+    },
+    {
+      "id": "repo.managed_file",
+      "support": "full",
+      "targetKinds": ["repo.github"],
+      "version": "v1alpha1"
+    },
+    {
+      "id": "repo.security",
+      "support": "full",
+      "targetKinds": ["repo.github"],
+      "version": "v1alpha1"
+    },
+    {
+      "id": "repo.settings",
+      "support": "full",
+      "targetKinds": ["repo.github"],
+      "version": "v1alpha1"
+    }
+  ],
+  "schema": "mint.catalog-records/v0",
+  "targetKinds": [
+    {"fields": [["account", "string"], ["region", "string"]], "kind": "aws.account"},
+    {"fields": [["project", "string"], ["region", "string"]], "kind": "gcp.project"},
+    {"fields": [["name", "string"], ["namespace", "string"]], "kind": "k8s.workload"},
+    {"fields": [["workspace", "string"]], "kind": "local.dev"},
+    {"fields": [["id", "string"]], "kind": "local.sandbox"},
+    {"fields": [["owner", "string"], ["name", "string"]], "kind": "repo.github"},
+    {"fields": [["id", "string"]], "kind": "sandbox"}
+  ],
+  "version": "v0"
+}
