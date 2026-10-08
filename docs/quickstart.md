@@ -14,6 +14,12 @@ mint version
 `mint version` prints the installed language version. Do not pin a
 superseded release in this install path.
 
+Editor (optional): download `mint-language-*.vsix` and `SHA256SUMS` from
+the newest [GitHub prerelease](https://github.com/opsdevcode/specmint-language/releases)
+(not a `latest` tag). Verify the checksum, then Command Palette →
+Extensions: Install from VSIX…, or `code --install-extension` /
+`cursor --install-extension`. Marketplace and Open VSX are deferred.
+
 Copy the checked-in local marker example, then run the language loop:
 
 ```bash

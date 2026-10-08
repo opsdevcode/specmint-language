@@ -12,7 +12,8 @@ provider tokens, or customer data in issues.
 - Integrations may plan; planning never grants execution authority.
 - The reference `local.sandbox` integration declares `executionSupport: fake`
   and refuses `execute`.
-- Release artifacts are built once, checksummed, and attached to a GitHub
-  prerelease. Do not trust a `latest` tag; none is published.
+- Release artifacts (wheel, sdist, VSIX) are built once, checksummed, and
+  attached to a GitHub prerelease. Verify `SHA256SUMS` before installing a
+  VSIX. Do not trust a `latest` tag; none is published.
 - PyPI publishing uses trusted publishing / OIDC only. There is no
   long-lived PyPI token in this repository.

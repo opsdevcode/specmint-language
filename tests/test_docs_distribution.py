@@ -17,6 +17,13 @@ CURRENT_INSTALL_DOCS = (
     REPO / "docs" / "releases.md",
     REPO / "docs" / "compatibility.md",
     REPO / "editors" / "vscode" / "README.md",
+    REPO / "specification" / "mint" / "v0" / "editor.md",
+)
+RELEASES_URL = "https://github.com/opsdevcode/specmint-language/releases"
+MARKETPLACE_PUBLISH_CLAIMS = (
+    "publishes that same VSIX to",
+    "VS Code Marketplace (`VSCE_PAT`)",
+    "Open VSX (`OVSX_PAT`)",
 )
 
 
@@ -39,6 +46,29 @@ def test_current_install_docs_are_unpinned() -> None:
             assert pin not in text, f"{path} still pins superseded {pin}"
         assert f"pipx install specmint=={pep440}" not in text
         assert f"pipx install specmint=={semver}" not in text
+        assert "/releases/latest" not in text
+        for claim in MARKETPLACE_PUBLISH_CLAIMS:
+            assert claim not in text, f"{path} still claims {claim}"
+
+
+def test_install_docs_are_github_first() -> None:
+    readme = README
+    assert "Install from VSIX" in readme
+    assert "--install-extension" in readme
+    assert RELEASES_URL in readme
+    assert "VS Code Marketplace and Open VSX publication is deferred" in readme
+    vscode_readme = (REPO / "editors" / "vscode" / "README.md").read_text(encoding="utf-8")
+    assert "Install from VSIX" in vscode_readme
+    assert "--install-extension" in vscode_readme
+    assert RELEASES_URL in vscode_readme
+    releases = (REPO / "docs" / "releases.md").read_text(encoding="utf-8")
+    assert "The VSIX stays on the GitHub Release" in releases
+    assert "VSCE_PAT" in releases
+    assert "OVSX_PAT" in releases
+    assert RELEASES_URL in (REPO / "docs" / "index.md").read_text(encoding="utf-8")
+    quickstart = (REPO / "docs" / "quickstart.md").read_text(encoding="utf-8")
+    assert "Install from VSIX" in quickstart
+    assert RELEASES_URL in quickstart
 
 
 def test_canonical_docs_url_is_github_pages() -> None:
@@ -88,4 +118,6 @@ def test_docs_site_builds_index(tmp_path: Path) -> None:
     assert (out / ".nojekyll").is_file()
     quickstart = (out / "docs" / "quickstart.html").read_text(encoding="utf-8")
     assert "pipx install specmint" in quickstart
+    assert "Install from VSIX" in quickstart
     assert "0.1.0a2" not in quickstart
+    assert RELEASES_URL in index

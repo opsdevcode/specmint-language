@@ -36,8 +36,10 @@ Formatting is `mint fmt` (`format_source`).
 
 ## Clients
 
-The private VS Code / Cursor extension lives at `editors/vscode/`.
-It is not published. Workspace Trust is required.
+The VS Code / Cursor extension lives at `editors/vscode/`. Workspace
+Trust is required. Install the VSIX from the GitHub Release for the
+language tag (see the repository README). Marketplace and Open VSX
+publication is deferred.
 
 ## Out of scope
 
