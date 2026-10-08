@@ -105,7 +105,7 @@ def run_integrations(args: Any, *, stdout: TextIO, stderr: TextIO) -> int:
         return _conformance(args, stdout=stdout)
     raise coded_error(
         "MINT_INTEGRATION",
-        "mint integrations accepts list, inspect, check, resolve, conformance, or init",
+        "mint integrations accepts list, inspect, check, resolve, or conformance",
     )
 
 

@@ -81,8 +81,15 @@ def test_init_writes_manifest_and_starter(tmp_path: Path) -> None:
     body = json.loads(out)
     assert body["ok"] is True
     assert body["manifest"] == "mint.toml"
+    assert body["template"] == "local-marker"
     assert (target / "mint.toml").is_file()
     assert (target / "main.mint").is_file()
+    code, out, err = _run(["check", "--project", str(target)])
+    assert code == 0, err
+    assert json.loads(out)["ok"] is True
+    code, out, err = _run(["check", "--project", str(target), "--locked"])
+    assert code == 1
+    assert json.loads(err)["code"] == "MINT_LOCK"
     code, out, err = _run(["init", str(target)])
     assert code == 1
     assert "already exists" in json.loads(err)["message"]

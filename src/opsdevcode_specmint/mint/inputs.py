@@ -5,11 +5,11 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 from opsdevcode_specmint.mint.catalog import CapabilityDecl, TargetKind
 from opsdevcode_specmint.mint.compile import SourceUnit
-from opsdevcode_specmint.mint.errors import MintDiagnostic, MintError, coded_error
+from opsdevcode_specmint.mint.diagnostics import display_path
+from opsdevcode_specmint.mint.errors import MintError, coded_error
 from opsdevcode_specmint.mint.extensions import Extension
 
 
@@ -81,18 +81,6 @@ def load_declared_graph(graph_path: Path) -> DeclaredProgram:
     )
 
 
-def diagnostic_payload(diagnostic: MintDiagnostic) -> dict[str, Any]:
-    return {
-        "ok": False,
-        "code": diagnostic.code,
-        "column": diagnostic.column,
-        "line": diagnostic.line,
-        "message": diagnostic.message,
-        "rendered": diagnostic.render(),
-        "unit": diagnostic.unit,
-    }
-
-
 def as_mint_error(exc: Exception) -> MintError:
     if isinstance(exc, MintError):
         return exc
@@ -103,7 +91,7 @@ def _read_file(path: Path) -> str:
     if not path.is_file():
         raise coded_error(
             "MINT_STATIC",
-            f"missing Mint input {path}; pass an existing declared file",
+            f"missing Mint input {display_path(path)}; pass an existing declared file",
         )
     return path.read_text(encoding="utf-8")
 
@@ -113,14 +101,14 @@ def _declared_child(base: Path, name: str, graph_path: Path) -> Path:
     if candidate.is_absolute() or ".." in candidate.parts:
         raise coded_error(
             "MINT_STATIC",
-            f"unit {name} in {graph_path} must be a file in {base}; "
+            f"unit {name} in {display_path(graph_path)} must be a file in the graph directory; "
             "do not use parent or absolute paths",
         )
     path = (base / candidate).resolve()
     if path.parent != base.resolve():
         raise coded_error(
             "MINT_STATIC",
-            f"unit {name} in {graph_path} must stay in {base}",
+            f"unit {name} in {display_path(graph_path)} must stay in the graph directory",
         )
     return path
 
@@ -130,8 +118,8 @@ def _reject_duplicate(seen: dict[str, Path], unit_id: str, path: Path) -> None:
     if other is not None:
         raise coded_error(
             "MINT_STATIC",
-            f"duplicate logical unit id {unit_id} from {other} and {path}; "
-            "rename one declared input",
+            f"duplicate logical unit id {unit_id} from {display_path(other)} and "
+            f"{display_path(path)}; rename one declared input",
         )
     seen[unit_id] = path
 

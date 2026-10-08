@@ -16,12 +16,18 @@ from opsdevcode_specmint.mint.adapters.plan import plan_mint_ir
 from opsdevcode_specmint.mint.adapters.registry import builtin_registry
 from opsdevcode_specmint.mint.adapters.snapshot import load_snapshot_file, snapshot_canonical_bytes
 from opsdevcode_specmint.mint.compile import compile_program
+from opsdevcode_specmint.mint.diagnostics import (
+    DEFAULT_OUTPUT_FORMAT,
+    display_path,
+    render_diagnostic,
+    render_payload,
+)
+from opsdevcode_specmint.mint.doctor import run_doctor
 from opsdevcode_specmint.mint.errors import MintError, coded_error
 from opsdevcode_specmint.mint.fmt import format_source
 from opsdevcode_specmint.mint.inputs import (
     DeclaredProgram,
     as_mint_error,
-    diagnostic_payload,
     load_declared_graph,
     load_declared_paths,
 )
@@ -39,8 +45,10 @@ from opsdevcode_specmint.mint.project import (
     init_project,
     load_locked_program,
     load_manifest,
+    load_project_units,
     write_lockfile,
 )
+from opsdevcode_specmint.mint.templates import DEFAULT_TEMPLATE, list_template_payload
 
 _LANGUAGE_EDITION = "v0"
 
@@ -57,6 +65,7 @@ def main(
     in_stream = stdin or sys.stdin
     parser = _build_parser()
     args = parser.parse_args(list(argv) if argv is not None else None)
+    output_format = getattr(args, "output_format", DEFAULT_OUTPUT_FORMAT)
     if args.show_version or args.command == "version":
         out.write(_version_line())
         return 0
@@ -66,23 +75,18 @@ def main(
     try:
         return _dispatch(args, stdin=in_stream, stdout=out, stderr=err)
     except MintError as exc:
-        err.write(json.dumps(diagnostic_payload(exc.diagnostic), indent=2, sort_keys=True) + "\n")
+        err.write(render_diagnostic(exc.diagnostic, output_format=output_format))
         return 1
     except (OSError, ValueError, json.JSONDecodeError) as exc:
-        err.write(
-            json.dumps(
-                diagnostic_payload(as_mint_error(exc).diagnostic),
-                indent=2,
-                sort_keys=True,
-            )
-            + "\n"
-        )
+        err.write(render_diagnostic(as_mint_error(exc).diagnostic, output_format=output_format))
         return 1
 
 
 def _dispatch(args: argparse.Namespace, *, stdin: IO[str], stdout: TextIO, stderr: TextIO) -> int:
     if args.command == "lsp":
         return serve_stdio()
+    if args.command == "doctor":
+        return _run_doctor(args, stdout=stdout)
     if args.command == "integrations":
         return run_integrations(args, stdout=stdout, stderr=stderr)
     if args.command == "adapters":
@@ -327,7 +331,9 @@ def _run_fmt(args: argparse.Namespace, *, stdin: IO[str], stdout: TextIO) -> int
         path = Path(raw)
         if not path.is_file():
             raise as_mint_error(
-                RuntimeError(f"missing Mint input {path}; pass an existing declared file")
+                RuntimeError(
+                    f"missing Mint input {display_path(path)}; pass an existing declared file"
+                )
             )
         source = path.read_text(encoding="utf-8")
         formatted = format_source(source, unit_id=path.name)
@@ -346,22 +352,32 @@ def _run_fmt(args: argparse.Namespace, *, stdin: IO[str], stdout: TextIO) -> int
 
 
 def _run_init(args: argparse.Namespace, *, stdout: TextIO) -> int:
+    if args.list_templates:
+        stdout.write(render_payload(list_template_payload(), output_format=args.output_format))
+        return 0
     directory = Path(args.directory) if args.directory else Path.cwd()
-    manifest = init_project(directory, name=args.name)
+    template = args.template or DEFAULT_TEMPLATE
+    manifest = init_project(directory, name=args.name, template=template)
     stdout.write(
-        json.dumps(
+        render_payload(
             {
                 "manifest": MANIFEST_NAME,
                 "name": manifest.name,
                 "ok": True,
                 "root": manifest.root,
+                "template": template,
             },
-            indent=2,
-            sort_keys=True,
+            output_format=args.output_format,
         )
-        + "\n"
     )
     return 0
+
+
+def _run_doctor(args: argparse.Namespace, *, stdout: TextIO) -> int:
+    project = Path(args.project) if args.project else None
+    report = run_doctor(project=project)
+    stdout.write(render_payload(report.to_dict(), output_format=args.output_format))
+    return 0 if report.ok else 1
 
 
 def _run_lock(args: argparse.Namespace, *, stdout: TextIO) -> int:
@@ -412,7 +428,10 @@ def _load_program(args: argparse.Namespace, *, stdin: IO[str]) -> DeclaredProgra
     if paths:
         stdin_text = stdin.read() if any(str(item) == "-" for item in paths) else None
         return load_declared_paths(paths, root=args.root, stdin_text=stdin_text)
-    return load_locked_program(_load_manifest(args))
+    manifest = _load_manifest(args)
+    if locked:
+        return load_locked_program(manifest)
+    return load_project_units(manifest)
 
 
 def _load_json(path_arg: str, *, stdin: IO[str]) -> dict[str, Any]:
@@ -421,7 +440,9 @@ def _load_json(path_arg: str, *, stdin: IO[str]) -> dict[str, Any]:
     else:
         path = Path(path_arg)
         if not path.is_file():
-            raise as_mint_error(RuntimeError(f"missing MintIR file {path}; pass an existing file"))
+            raise as_mint_error(
+                RuntimeError(f"missing MintIR file {display_path(path)}; pass an existing file")
+            )
         raw = path.read_text(encoding="utf-8")
     document = json.loads(raw)
     if not isinstance(document, dict):
@@ -437,7 +458,8 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="mint",
         description=(
-            "Check, compile, convert, format, lock, inspect, plan, and serve Mint LSP offline."
+            "Check, compile, convert, doctor, format, lock, inspect, plan, and serve Mint LSP "
+            "offline."
         ),
     )
     parser.add_argument(
@@ -445,6 +467,13 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         dest="show_version",
         help="Print the Mint language edition and SpecMint service version",
+    )
+    parser.add_argument(
+        "--output-format",
+        choices=("json", "human"),
+        default=DEFAULT_OUTPUT_FORMAT,
+        dest="output_format",
+        help="json or human for diagnostics and first-run output; not inferred from the TTY",
     )
     sub = parser.add_subparsers(dest="command")
     check = sub.add_parser("check", help="Type-check and catalog-check declared Mint units")
@@ -540,9 +569,22 @@ def _build_parser() -> argparse.ArgumentParser:
     fmt.add_argument("--check", action="store_true", help="Exit 1 when formatting would change")
     inspect_cmd = sub.add_parser("inspect", help="Recheck a MintIR document digest")
     inspect_cmd.add_argument("path", help="MintIR JSON path, or - for stdin")
-    init_cmd = sub.add_parser("init", help="Write mint.toml and a starter unit")
+    init_cmd = sub.add_parser("init", help="Write mint.toml and a starter unit from a template")
     init_cmd.add_argument("directory", nargs="?", help="Project directory (default: cwd)")
     init_cmd.add_argument("--name", help="Project name (lowercase DNS-label)")
+    init_cmd.add_argument(
+        "--template",
+        help=f"Init template id (default: {DEFAULT_TEMPLATE})",
+    )
+    init_cmd.add_argument(
+        "--list-templates",
+        action="store_true",
+        help="Print available init templates and exit",
+    )
+    _add_output_format_arg(init_cmd)
+    doctor_cmd = sub.add_parser("doctor", help="Run offline first-run diagnostics")
+    _add_project_arg(doctor_cmd)
+    _add_output_format_arg(doctor_cmd)
     lock_cmd = sub.add_parser("lock", help="Write canonical mint.lock from mint.toml")
     lock_cmd.add_argument(
         "--check",
@@ -591,3 +633,22 @@ def _add_project_arg(parser: argparse.ArgumentParser) -> None:
         "--project",
         help="Directory or mint.toml path used to discover the project manifest",
     )
+
+
+def _add_output_format_arg(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--output-format",
+        choices=("json", "human"),
+        default=DEFAULT_OUTPUT_FORMAT,
+        dest="output_format",
+        help="json or human; not inferred from the TTY",
+    )
+
+
+def language_command_names() -> frozenset[str]:
+    parser = _build_parser()
+    for action in parser._actions:
+        choices = getattr(action, "choices", None)
+        if action.dest == "command" and isinstance(choices, dict):
+            return frozenset(str(name) for name in choices)
+    return frozenset()

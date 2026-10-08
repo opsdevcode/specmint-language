@@ -42,6 +42,7 @@ def test_help_lists_language_commands() -> None:
         "check",
         "compile",
         "convert",
+        "doctor",
         "fmt",
         "inspect",
         "integrations",
@@ -74,6 +75,10 @@ def test_check_reports_static_diagnostic() -> None:
     assert problem["ok"] is False
     assert problem["code"] == "MINT_STATIC"
     assert "without URLs" in problem["message"]
+    assert problem["range"] is not None
+    assert problem["range"]["start"]["line"] == problem["line"]
+    assert problem["range"]["end"]["line"] >= problem["line"]
+    assert problem["snapshot"] is None
 
 
 def test_compile_emits_canonical_mint_ir(tmp_path: Path) -> None:
@@ -176,12 +181,16 @@ def test_inspect_rejects_host_artifact(tmp_path: Path) -> None:
     assert "MintIR" in json.loads(err)["message"]
 
 
-def test_missing_file_names_the_path(tmp_path: Path) -> None:
+def test_missing_file_names_the_declared_name_not_host_path(tmp_path: Path) -> None:
     missing = tmp_path / "absent.mint"
     code, out, err = _run(["check", str(missing)])
     assert code == 1
     assert out == ""
-    assert str(missing) in json.loads(err)["message"]
+    problem = json.loads(err)
+    assert "absent.mint" in problem["message"]
+    assert str(missing) not in problem["message"]
+    assert "/Users/" not in problem["message"]
+    assert "/var/" not in problem["message"]
 
 
 def test_graph_rejects_parent_unit(tmp_path: Path) -> None:

@@ -45,7 +45,18 @@ class Parser:
         self._unit_id = unit_id
 
     def _fail(self, line: int, column: int, hint: str) -> NoReturn:
-        raise parse_error(line, column, hint, unit=self._unit_id)
+        token = self._peek()
+        width = max(len(token.text), 1)
+        raise parse_error(
+            line,
+            column,
+            hint,
+            unit=self._unit_id,
+            end_line=token.line if token.line else line,
+            end_column=(token.column + width) if token.column else column + width,
+            start_offset=token.start_offset,
+            end_offset=token.start_offset + width,
+        )
 
     def parse_module(self) -> MintModule:
         self._expect_ident("mint", "start the program with mint v0")
