@@ -6,7 +6,7 @@ compiler, `mint` CLI, editor, and Integration Protocol v0.
 **Public preview / alpha.2. Not production-ready. Not 1.0.** Canonical
 docs: <https://opsdevcode.github.io/specmint-language/>.
 
-- [Five-minute quickstart](quickstart.md)
+- [Ten-minute quickstart](quickstart.md)
 - [GitHub Releases (CLI artifacts and VSIX)](https://github.com/opsdevcode/specmint-language/releases)
 - [Language](../specification/mint/v0/language.md)
 - [Why Mint is not Terraform](why-not-terraform.md)

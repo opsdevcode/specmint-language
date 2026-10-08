@@ -38,13 +38,13 @@ A thin `specmint mint …` alias forwards to the same language CLI.
 Pin a GitHub Release tag and artifact SHA-256 when you need a specific
 build. There is no `latest` tag.
 
-## Five-minute quickstart
+## Ten-minute quickstart
 
-See [docs/quickstart.md](docs/quickstart.md). Copy
-`examples/projects/local-marker`, then `check`, `fmt --check`, `lock`,
-`compile`, `inspect`, `plan`, and `mint integrations conformance`. SpecMint
-begins after that plan: approval, fake/local execution, verification, and
-evidence. No credentials. No live mutation.
+See [docs/quickstart.md](docs/quickstart.md). `mint init --template local-marker`,
+then `doctor`, `check`, `fmt --check`, `lock`, `compile`, `inspect`, `plan`,
+and `mint integrations test`. SpecMint begins after that plan: approval,
+fake/local execution, verification, and evidence. No credentials. No live
+mutation.
 
 ## Headline: Integration Protocol v0
 

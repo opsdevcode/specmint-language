@@ -1,4 +1,4 @@
-# Five-minute Mint quickstart
+# Ten-minute Mint quickstart
 
 Public preview. Offline. No credentials. No live mutation. `mint apply`
 does not exist.
@@ -20,35 +20,44 @@ the newest [GitHub prerelease](https://github.com/opsdevcode/specmint-language/r
 Extensions: Install from VSIX…, or `code --install-extension` /
 `cursor --install-extension`. Marketplace and Open VSX are deferred.
 
-Copy the checked-in local marker example, then run the language loop:
+Initialize a local-marker project, then run the language loop:
 
 ```bash
-cp -R examples/projects/local-marker /tmp/mint-quickstart
-cd /tmp/mint-quickstart
-
-mint check --project . --locked
+mint init mint-quickstart --name mint-quickstart --template local-marker
+cd mint-quickstart
+mint doctor --project .
+mint check --project .
 mint fmt --check main.mint
+mint lock --project .
 mint lock --check --project .
 mint compile --project . --locked > mint-ir.json
 mint inspect mint-ir.json
 mint plan --project . --locked
-mint integrations conformance local.sandbox.ensure_marker
+mint integrations test local.sandbox.ensure_marker
 ```
 
 What each step does:
 
 | Command | Result |
 | --- | --- |
+| `init` | Write `mint.toml` and `main.mint` from the local-marker template |
+| `doctor` | Offline first-run checks; `mint apply` stays unknown |
 | `check` | Type-check and catalog-check the declared unit |
 | `fmt --check` | Confirm formatting is already canonical |
+| `lock` | Write `mint.lock` |
 | `lock --check` | Confirm `mint.lock` matches `mint.toml` |
 | `compile` | Emit canonical MintIR |
 | `inspect` | Recheck the MintIR digest |
 | `plan` | Produce a closed plan through the local/fake integration |
-| `integrations conformance` | Run the reference `local.sandbox` harness |
+| `integrations test` | Observe, plan, verify, evidence; execute fails closed |
 
 Planning does not write a sandbox marker. The integration declares
-`executionSupport: fake` and refuses `execute`.
+`executionSupport: fake` and refuses `execute`. The conformance kit covers
+observation, plan, verification, and evidence. Catalog records are local
+JSON data. There is no hosted registry.
+
+`--output-format json|human` selects diagnostic and first-run output.
+The default is `json`. It is not inferred from the TTY.
 
 ## Where SpecMint begins
 
