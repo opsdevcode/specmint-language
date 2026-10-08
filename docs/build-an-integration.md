@@ -59,9 +59,19 @@ integration. `remove` unpins.
 
 ## Catalog records
 
-`mint.catalog-records/v0` is local data. Packaged records may name the
-in-tree `local.sandbox.ensure_marker` reference. Records for standalone
-public integration artifacts are added only after those artifacts exist.
+`mint.catalog-records/v0` is local data. Packaged records name
+`local.sandbox.ensure_marker` 0.1.0 (in-tree) and `repo.github.plan`
+0.1.0. `mint integrations add` still does not pip; pin a standalone
+tree with `--local`.
+
+Standalone public artifacts (GitHub prereleases, not PyPI, not
+`latest`):
+
+- `mint-integration-local` `v0.2.0-alpha.1`
+  wheel `sha256:591e1b3ebdd7e4f9373996e0cdeafa62d8fea39d2640ded8270ff2e59c68094d`
+- `mint-integration-github` `v0.2.0-alpha.1`
+  wheel `sha256:3c864b4f5e7298a0a2f52d0680cb5c3eb8ea57a8195e7d9ba628fe3b7b6e60da`
+- `mint-integration-template` `v0.2.0-alpha.1` (not a Python package)
 
 ## Will not appear here
 

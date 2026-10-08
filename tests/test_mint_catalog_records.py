@@ -63,7 +63,17 @@ def test_catalog_records_include_packaged_reference() -> None:
     assert "execute" not in found.phases
     matches = search_catalog_integrations(query="sandbox", target_kind_filter="local.sandbox")
     assert found in matches
-    assert {item.identity for item in INTEGRATIONS} == {ENSURE_MARKER_TYPE}
+    github = catalog_integration("repo.github.plan", "0.1.0")
+    assert github is not None
+    assert github.origin == "packaged"
+    assert github.execution_support == "fake"
+    assert "execute" not in github.phases
+    github_matches = search_catalog_integrations(query="github", target_kind_filter="repo.github")
+    assert github in github_matches
+    assert {item.identity for item in INTEGRATIONS} == {
+        ENSURE_MARKER_TYPE,
+        "repo.github.plan",
+    }
 
 
 def first_capability_ids() -> set[str]:
