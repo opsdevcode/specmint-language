@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.2.0-alpha.2...v0.3.0-alpha.2) (2026-10-08)
+
+
+### Features
+
+* **cli:** add doctor, init templates, and human diagnostics ([#16](https://github.com/opsdevcode/specmint-language/issues/16)) ([4e367fa](https://github.com/opsdevcode/specmint-language/commit/4e367fac6d53a488e1dc23bbc4b2bea01838871b))
+* **mint:** add integration SDK, catalog records, and test kit ([#18](https://github.com/opsdevcode/specmint-language/issues/18)) ([0e044a9](https://github.com/opsdevcode/specmint-language/commit/0e044a901de43cc548a6da45969c1024854d408a))
+
+
+### Documentation
+
+* add ten-minute quickstart and release-please guards ([#19](https://github.com/opsdevcode/specmint-language/issues/19)) ([0395d7c](https://github.com/opsdevcode/specmint-language/commit/0395d7cb4e3e8b2821567860b85c2ab2705cef48))
+
 ## [0.2.0-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.1.1-alpha.2...v0.2.0-alpha.2) (2026-10-04)
 
 
