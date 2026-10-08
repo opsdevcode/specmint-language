@@ -75,6 +75,20 @@ def test_release_actions_are_commit_pinned() -> None:
     _assert_actions_are_pinned(PUBLISH)
 
 
+def test_docs_defer_to_release_please_for_prerelease() -> None:
+    compatibility = (REPO / "docs" / "compatibility.md").read_text(encoding="utf-8")
+    contributing = (REPO / "CONTRIBUTING.md").read_text(encoding="utf-8")
+    releases = (REPO / "docs" / "releases.md").read_text(encoding="utf-8")
+    for text in (compatibility, contributing, releases):
+        assert "Release Please" in text
+        owns_tags = "gh release create" in text or (
+            "Humans and local scripts do not calculate or push release tags" in text
+        )
+        assert owns_tags
+    assert "vscode-marketplace:" not in PUBLISH
+    assert "open-vsx:" not in PUBLISH
+
+
 def test_publish_keeps_github_vsix_and_drops_marketplace_jobs() -> None:
     assert "github-assets:" in PUBLISH
     assert "pypi:" in PUBLISH

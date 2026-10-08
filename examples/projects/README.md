@@ -2,7 +2,7 @@
 
 Offline `mint.toml` + `mint.lock` fixtures for edition `v0`. They are
 not published packages and do not use registries, git clones, or SDKs.
-The five-minute loop uses `local-marker`; see [docs/quickstart.md](../../docs/quickstart.md).
+The ten-minute loop uses `local-marker`; see [docs/quickstart.md](../../docs/quickstart.md).
 
 Spec examples: `minimal`, `modules`, `repository-governance`,
 `repository-managed-file`, `repave-platform-repo`, `cross-platform`,

@@ -17,11 +17,13 @@ make format && make quality && make test
   that compatibility window until `0.2.0` (ADR 018).
 - Hosted integration registry, signing, and OCI delivery are out of scope.
 - Do not claim production readiness or 1.0.
+- Release Please owns prerelease tags. Do not run `git tag` or
+  `gh release create`. Do not add Marketplace or Open VSX publish jobs.
 
 ## Documentation
 
 Public docs live under `docs/` and `specification/mint/v0/`. Start with
-[the five-minute quickstart](docs/quickstart.md).
+[the ten-minute quickstart](docs/quickstart.md).
 
 ## Security
 

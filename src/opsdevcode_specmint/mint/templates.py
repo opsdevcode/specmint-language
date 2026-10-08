@@ -10,7 +10,6 @@ DEFAULT_TEMPLATE = "local-marker"
 
 _LOCAL_MARKER_MINT = """\
 mint v0
-
 automation as-local-marker-1 {
   owner "platform@opsdevcode.com"
   intent "Ensure a sandbox marker exists after an authorized plan"
@@ -25,7 +24,6 @@ automation as-local-marker-1 {
 
 _MINIMAL_MINT = """\
 mint v0
-
 automation as-local-marker-1 {
   owner "platform@opsdevcode.com"
   intent "Compile a local sandbox marker plan"
