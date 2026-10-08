@@ -139,6 +139,21 @@ def test_add_refuses_network_and_does_not_pip(tmp_path: Path) -> None:
     assert "[[integrations]]" not in (project / "mint.toml").read_text(encoding="utf-8")
 
 
+def test_local_conformance_kit(tmp_path: Path) -> None:
+    example = Path(__file__).resolve().parents[1] / "examples" / "integrations" / "local-sandbox"
+    code, out, err = _run(["integrations", "test", "--local", str(example)])
+    assert code == 0, err
+    report = json.loads(out)
+    assert report["ok"] is True
+    assert report["executeRefused"] is True
+    assert report["identity"] == IDENTITY
+    refused = _run(
+        ["integrations", "test", "--local", "https://github.com/opsdevcode/mint-integration-local"]
+    )
+    assert refused[0] == 1
+    assert "refuse network source" in refused[2]
+
+
 def test_verify_fails_on_tampered_digest(tmp_path: Path) -> None:
     project = _project(tmp_path)
     add_code, _out, add_err = _run(["integrations", "add", "--project", str(project), IDENTITY])

@@ -43,7 +43,12 @@ mint integrations remove --project . local.sandbox.ensure_marker
 `add` binds `manifestDigest` and `artifactDigest` in `mint.lock`. It
 does not pip-install or execute the integration. Pass `--local` only for
 a project-relative `mint.integration/v0` file. See
-[ADR 020](../../../docs/adr/020-integration-discovery.md).
+[ADR 020](../../../docs/adr/020-integration-discovery.md) and the
+[author tutorial](../../../docs/build-an-integration.md).
+
+```
+mint integrations test --local examples/integrations/local-sandbox
+```
 
 Public SDK entry points are documented in
 [ADR 019](../../../docs/adr/019-mint-integration-sdk.md):
