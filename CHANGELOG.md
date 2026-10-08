@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.3.0-alpha.2...v0.4.0-alpha.2) (2026-10-08)
+
+
+### Features
+
+* **mint:** add offline integration discovery and lockfile pinning ([#20](https://github.com/opsdevcode/specmint-language/issues/20)) ([eadbccd](https://github.com/opsdevcode/specmint-language/commit/eadbccd080fd13ee08d686d729f4e069a6f9823d))
+
+
+### Documentation
+
+* add integration author tutorial and local test ([#22](https://github.com/opsdevcode/specmint-language/issues/22)) ([9e02c89](https://github.com/opsdevcode/specmint-language/commit/9e02c89235d5129aa280e701a2a9bc1bbb957395))
+
 ## [0.3.0-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.2.0-alpha.2...v0.3.0-alpha.2) (2026-10-08)
 
 
