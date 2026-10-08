@@ -23,8 +23,28 @@ from opsdevcode_specmint.integration.resolve import (
 )
 from opsdevcode_specmint.mint.adapters.registry import builtin_registry
 from opsdevcode_specmint.mint.adapters.types import AdapterManifest
-from opsdevcode_specmint.mint.errors import coded_error
+from opsdevcode_specmint.mint.discovery import (
+    add_integration,
+    inspect_integration,
+    remove_integration,
+    search_integrations,
+    verify_integrations,
+)
+from opsdevcode_specmint.mint.errors import MintError, coded_error
 from opsdevcode_specmint.mint.project import load_manifest
+
+_COMMANDS = (
+    "list",
+    "search",
+    "inspect",
+    "check",
+    "resolve",
+    "add",
+    "remove",
+    "verify",
+    "conformance",
+    "test",
+)
 
 _REMOVAL = "0.2.0"
 
@@ -79,20 +99,26 @@ def run_integrations(args: Any, *, stdout: TextIO, stderr: TextIO) -> int:
         }
         stdout.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
         return 0
+    if command == "search":
+        payload = search_integrations(
+            query=getattr(args, "query", "") or "",
+            capability=getattr(args, "capability", "") or "",
+            target_kind=getattr(args, "target_kind", "") or "",
+        )
+        stdout.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+        return 0
     if command == "inspect":
-        if args.identity == IDENTITY:
-            stdout.write(json.dumps(manifest_document(), indent=2, sort_keys=True) + "\n")
-            return 0
-        found = None
-        for item in builtin_registry().manifests():
-            if item.adapter_id == args.identity:
-                found = adapter_as_integration(item)
-        if found is None:
-            raise coded_error(
-                "MINT_INTEGRATION",
-                f"unknown integration {args.identity}",
-            )
-        stdout.write(json.dumps(found, indent=2, sort_keys=True) + "\n")
+        try:
+            payload = inspect_integration(args.identity)
+        except MintError as exc:
+            found = None
+            for item in builtin_registry().manifests():
+                if item.adapter_id == args.identity:
+                    found = adapter_as_integration(item)
+            if found is None:
+                raise exc
+            payload = found
+        stdout.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
         return 0
     if command == "check":
         text = Path(args.manifest).read_text(encoding="utf-8")
@@ -101,11 +127,27 @@ def run_integrations(args: Any, *, stdout: TextIO, stderr: TextIO) -> int:
         return 0
     if command == "resolve":
         return _resolve(args, stdout=stdout)
+    if command == "add":
+        payload = add_integration(
+            Path(args.project),
+            identity=getattr(args, "identity", "") or "",
+            local=getattr(args, "local", "") or "",
+        )
+        stdout.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+        return 0
+    if command == "remove":
+        payload = remove_integration(Path(args.project), args.identity)
+        stdout.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+        return 0
+    if command == "verify":
+        payload = verify_integrations(Path(args.project))
+        stdout.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+        return 0
     if command in {"conformance", "test"}:
         return _conformance(args, stdout=stdout)
     raise coded_error(
         "MINT_INTEGRATION",
-        "mint integrations accepts list, inspect, check, resolve, conformance, or test",
+        "mint integrations accepts " + ", ".join(_COMMANDS),
     )
 
 

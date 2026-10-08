@@ -3,6 +3,21 @@
 Edition `v0` is public preview. Contracts may change before 1.0. This
 repository will not claim production stability.
 
+## Matrix
+
+| Surface | Contract | Compatible with |
+| --- | --- | --- |
+| Language edition | `v0` | MintIR `v0`, `mint.project/v0`, `mint.lock/v0` |
+| Integration protocol | `mint.protocol/v0` | stdio JSON-RPC; fail-closed `execute` |
+| Integration manifest | `mint.integration/v0` | ADR 019 SDK; `mint integrations check` |
+| Catalog records | `mint.catalog-records/v0` | local data; `search` / `inspect` |
+| Discovery CLI | `search inspect add remove verify test` | lockfile digest bind; no network |
+| Adapter alias | `mint.adapter/v0` | lossless plan-only mapping until 0.2.0 |
+
+Pin a language release by Git tag (`v0.x.y-alpha.N`) and artifact
+SHA-256. Pin an integration by `manifestDigest` and `artifactDigest` in
+`mint.lock`. There is no `latest` tag and no hosted registry.
+
 ## Kept in the current public preview
 
 - Canonical MintIR for edition `v0`
@@ -11,6 +26,8 @@ repository will not claim production stability.
 - Integration Protocol `mint.integration/v0` and `mint.protocol/v0`
 - Public SDK entry points in ADR 019 (manifest-first and stdio JSON-RPC)
 - Local catalog records (`mint.catalog-records/v0`)
+- Offline discovery: `mint integrations search|inspect|add|remove|verify`
+- Lockfile digest bind for pinned integrations (ADR 020)
 - `mint integrations test` conformance kit
 - `mint.adapter/v0` as a lossless alpha compatibility path
 - `mint adapters` as a deprecated alias that emits `MINT_DEPRECATED_ADAPTER`
@@ -33,6 +50,8 @@ and Open VSX publication stay deferred.
 - `mint apply`
 - live provider SDKs
 - a hosted integration registry
+- hidden network on `search`, `add`, or `verify`
+- `add` that pip-installs or executes an integration
 - CUE evaluation of caller-supplied programs
 - production-ready or 1.0 claims
 - VS Code Marketplace or Open VSX publish jobs

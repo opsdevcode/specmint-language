@@ -51,6 +51,12 @@ Fields: `schema` (`mint.lock/v0`), `name`, `edition`, `root`,
 `catalogDigest`, `irDigest`, `units` (`path` + `digest`), `extensions`
 (`namespace` + `version` + `digest`).
 
+When `[[integrations]]` is present, `mint.lock` also binds each
+`identity` with `manifestDigest`, `artifactDigest`, `schemaDigests`,
+capabilities, target kinds, and phases. `mint integrations add` writes
+that pin. `mint integrations verify` recomputes it. Sources that look
+like URLs, Git remotes, or PyPI names are refused.
+
 `mint lock --check` fail-closed:
 
 | Condition | Code |
@@ -79,7 +85,13 @@ and/or `mint project check`. Do not mix paths/`--graph` with
 | `mint project check --project DIR` | Same as locked project check |
 | `specmint mint project check --project DIR` | Product CLI forwards to `mint` |
 | `mint plan` | Route compiled `MintIR` through builtin adapters |
-| `mint adapters` | List or inspect the closed adapter registry |
+| `mint integrations search` | Filter local `mint.catalog-records/v0`; no network |
+| `mint integrations inspect` | Print a packaged, catalog, or builtin identity |
+| `mint integrations add --project DIR [IDENTITY] [--local PATH]` | Pin and bind lockfile digests; never pip or execute |
+| `mint integrations remove --project DIR IDENTITY` | Unpin and refresh `mint.lock` |
+| `mint integrations verify --project DIR` | Recompute pinned digests; do not execute |
+| `mint integrations test` | Observe/plan/verify/evidence conformance kit |
+| `mint adapters` | Deprecated alias of `mint integrations` |
 | `mint lsp` | Stdio language server over `compile_program` |
 
 `--profile` checks that listed target ids exist on the compiled IR. It
