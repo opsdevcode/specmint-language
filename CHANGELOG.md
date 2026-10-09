@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.0-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.6.0-alpha.2...v0.7.0-alpha.2) (2026-10-09)
+
+
+### Features
+
+* **mint:** add process supervisor status and lock update ([#30](https://github.com/opsdevcode/specmint-language/issues/30)) ([a1adfce](https://github.com/opsdevcode/specmint-language/commit/a1adfcec300850d74c992e2ae94cfbb77944dba9))
+
+
+### Documentation
+
+* publish wave 2 compatibility matrix and standalone boundary ([#32](https://github.com/opsdevcode/specmint-language/issues/32)) ([a6998ab](https://github.com/opsdevcode/specmint-language/commit/a6998ab00615c4531c29e2940f5578ae62973772))
+
 ## [0.6.0-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.5.0-alpha.2...v0.6.0-alpha.2) (2026-10-09)
 
 
