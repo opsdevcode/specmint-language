@@ -3,6 +3,8 @@
 Mint releases are derived from Conventional Commits and Semantic Versioning.
 Humans and local scripts do not calculate or push release tags.
 
+Org policy (`opsdevcode.release/v0`): GitHub Releases are canonical. PyPI is a mirror of those artifact bytes. Marketplace and Open VSX stay deferred. See https://github.com/opsdevcode/.github/blob/main/docs/github-releases.md.
+
 1. Normal product PR titles and commits use Conventional Commits.
 2. Release Please maintains an alpha release PR containing the generated
    version, changelog, Python package version, VS Code extension version, and
