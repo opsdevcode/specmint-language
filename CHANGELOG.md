@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.7.0-alpha.2...v0.8.0-alpha.2) (2026-10-09)
+
+
+### Features
+
+* **cli:** add sarif diagnostics for code scanning ([#33](https://github.com/opsdevcode/specmint-language/issues/33)) ([b6efbed](https://github.com/opsdevcode/specmint-language/commit/b6efbed049910915060dea0308b4a62ac9c39190))
+
 ## [0.7.0-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.6.0-alpha.2...v0.7.0-alpha.2) (2026-10-09)
 
 
