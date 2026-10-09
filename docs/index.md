@@ -24,6 +24,7 @@ docs: <https://opsdevcode.github.io/specmint-language/>.
 - [Repository snapshots](../specification/mint/v0/repository-snapshot.md)
 - [Conformance](../specification/mint/v0/conformance/README.md)
 - [Compatibility](compatibility.md)
+- [Standalone architecture](standalone.md)
 - [Roadmap boundaries](roadmap.md)
 - [Security](../SECURITY.md)
 - [Contributing](../CONTRIBUTING.md)
