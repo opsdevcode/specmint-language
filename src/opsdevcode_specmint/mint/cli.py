@@ -391,8 +391,18 @@ def _run_lock(args: argparse.Namespace, *, stdout: TextIO) -> int:
         json.dumps(
             {
                 "digest": lockfile.ir_digest,
+                "integrations": [
+                    {
+                        "artifactDigest": item.artifact_digest,
+                        "identity": item.identity,
+                        "manifestDigest": item.manifest_digest,
+                        "version": item.version,
+                    }
+                    for item in lockfile.integrations
+                ],
                 "lock": manifest.lock_path.name,
                 "ok": True,
+                "updated": not args.check,
             },
             indent=2,
             sort_keys=True,
@@ -541,6 +551,14 @@ def _build_parser() -> argparse.ArgumentParser:
         "verify", help="Recompute lockfile integration digests without executing"
     )
     verify_integration.add_argument("--project", required=True)
+    status_integration = integrations_sub.add_parser(
+        "status", help="Show pinned integration process status without executing"
+    )
+    status_integration.add_argument("--project", required=True)
+    update_integration = integrations_sub.add_parser(
+        "update", help="Refresh lockfile pins from packaged or local sources"
+    )
+    update_integration.add_argument("--project", required=True)
     conformance = integrations_sub.add_parser("conformance", help="Alias of mint integrations test")
     conformance.add_argument("integration", nargs="?", default="")
     conformance.add_argument(

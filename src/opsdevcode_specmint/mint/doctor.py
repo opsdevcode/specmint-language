@@ -63,6 +63,7 @@ def run_doctor(*, project: Path | None = None, cwd: Path | None = None) -> Docto
         _offline_check(),
         *_project_checks(start=start, project=project),
         _integrations_check(),
+        _supervisor_check(),
     )
     ok = all(item.ok or item.skipped for item in checks)
     return DoctorReport(ok=ok, offline=True, schema=DOCTOR_SCHEMA, checks=checks)
@@ -124,6 +125,15 @@ def _integrations_check() -> DoctorCheck:
         True,
         False,
         f"reference integration {IDENTITY} is packaged",
+    )
+
+
+def _supervisor_check() -> DoctorCheck:
+    return DoctorCheck(
+        "supervisor",
+        True,
+        False,
+        "process supervisor is one-shot stdio; no daemon",
     )
 
 

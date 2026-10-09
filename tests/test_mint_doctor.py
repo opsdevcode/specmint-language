@@ -23,6 +23,8 @@ def test_doctor_offline_without_project() -> None:
     assert by_id["offline"]["ok"] is True
     assert by_id["project"]["skipped"] is True
     assert by_id["integrations"]["ok"] is True
+    assert by_id["supervisor"]["ok"] is True
+    assert "no daemon" in by_id["supervisor"]["message"]
 
 
 def test_doctor_human_format() -> None:
