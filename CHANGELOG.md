@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.4.0-alpha.2...v0.5.0-alpha.2) (2026-10-09)
+
+
+### Features
+
+* **mint:** add catalog records for public github integration ([#23](https://github.com/opsdevcode/specmint-language/issues/23)) ([71b88b5](https://github.com/opsdevcode/specmint-language/commit/71b88b52d326284bff2f99fbaf9a434ad817c792))
+
 ## [0.4.0-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.3.0-alpha.2...v0.4.0-alpha.2) (2026-10-08)
 
 
