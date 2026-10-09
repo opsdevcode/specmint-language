@@ -47,6 +47,24 @@ class CapabilityDecl:
 
 
 @dataclass(frozen=True, slots=True)
+class GitHubReleaseCoordinate:
+    repository: str
+    tag: str
+    artifact: str
+    url: str
+    artifact_digest: str
+    manifest_digest: str
+
+    def to_record(self) -> dict[str, Any]:
+        return {
+            "artifact": self.artifact,
+            "repository": self.repository,
+            "tag": self.tag,
+            "url": self.url,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class CatalogIntegration:
     identity: str
     version: str
@@ -57,9 +75,10 @@ class CatalogIntegration:
     phases: tuple[str, ...]
     execution_support: str
     origin: str
+    github: GitHubReleaseCoordinate | None = None
 
     def to_record(self) -> dict[str, Any]:
-        return {
+        record: dict[str, Any] = {
             "capabilities": [
                 {"id": capability_id, "version": capability_version}
                 for capability_id, capability_version in self.capabilities
@@ -73,6 +92,11 @@ class CatalogIntegration:
             "targetKinds": list(self.target_kinds),
             "version": self.version,
         }
+        if self.github is not None:
+            record["artifactDigest"] = self.github.artifact_digest
+            record["manifestDigest"] = self.github.manifest_digest
+            record["release"] = self.github.to_record()
+        return record
 
 
 def catalog_records_path() -> Path:
@@ -149,17 +173,20 @@ def _integrations_from_records(document: dict[str, Any]) -> tuple[CatalogIntegra
     if not isinstance(items, list):
         raise catalog_error("catalog records integrations must be an array")
     integrations: list[CatalogIntegration] = []
-    seen: set[tuple[str, str]] = set()
+    seen: set[tuple[str, str, str]] = set()
     for item in items:
         if not isinstance(item, dict):
             raise catalog_error("each catalog integration record must be an object")
         allowed = {
+            "artifactDigest",
             "capabilities",
             "executionSupport",
             "identity",
+            "manifestDigest",
             "name",
             "origin",
             "phases",
+            "release",
             "summary",
             "targetKinds",
             "version",
@@ -170,9 +197,10 @@ def _integrations_from_records(document: dict[str, Any]) -> tuple[CatalogIntegra
         identity = str(item.get("identity", ""))
         version = str(item.get("version", ""))
         origin = str(item.get("origin", ""))
-        if origin not in {"packaged", "local"}:
+        if origin not in {"packaged", "local", "github"}:
             raise catalog_error(
-                f"catalog integration {identity or 'record'} origin must be packaged or local"
+                f"catalog integration {identity or 'record'} origin must be "
+                "packaged, local, or github"
             )
         capabilities_raw = item.get("capabilities")
         kinds_raw = item.get("targetKinds")
@@ -191,15 +219,18 @@ def _integrations_from_records(document: dict[str, Any]) -> tuple[CatalogIntegra
                 "catalog integration records need identity, version, capabilities, "
                 "targetKinds, and phases"
             )
-        key = (identity, version)
+        key = (identity, version, origin)
         if key in seen:
-            raise catalog_error(f"duplicate catalog integration {identity} {version}")
+            raise catalog_error(
+                f"duplicate catalog integration {identity} {version} origin {origin}"
+            )
         seen.add(key)
         capabilities: list[tuple[str, str]] = []
         for capability in capabilities_raw:
             if not isinstance(capability, dict):
                 raise catalog_error(f"catalog integration {identity} capabilities must be objects")
             capabilities.append((str(capability.get("id", "")), str(capability.get("version", ""))))
+        github = _github_coordinate(item, identity=identity, origin=origin)
         integrations.append(
             CatalogIntegration(
                 identity=identity,
@@ -211,9 +242,56 @@ def _integrations_from_records(document: dict[str, Any]) -> tuple[CatalogIntegra
                 phases=tuple(str(phase) for phase in phases_raw),
                 execution_support=str(item.get("executionSupport", "")),
                 origin=origin,
+                github=github,
             )
         )
-    return tuple(sorted(integrations, key=lambda item: (item.identity, item.version)))
+    return tuple(sorted(integrations, key=lambda item: (item.identity, item.origin, item.version)))
+
+
+def _github_coordinate(
+    item: dict[str, Any], *, identity: str, origin: str
+) -> GitHubReleaseCoordinate | None:
+    if origin != "github":
+        extra = sorted(
+            key for key in ("artifactDigest", "manifestDigest", "release") if key in item
+        )
+        if extra:
+            raise catalog_error(f"catalog integration {identity} origin {origin} must omit {extra}")
+        return None
+    artifact_digest = str(item.get("artifactDigest", ""))
+    manifest_digest = str(item.get("manifestDigest", ""))
+    release = item.get("release")
+    if (
+        not artifact_digest.startswith("sha256:")
+        or not manifest_digest.startswith("sha256:")
+        or not isinstance(release, dict)
+    ):
+        raise catalog_error(
+            f"catalog integration {identity} github origin needs sha256 artifactDigest, "
+            "manifestDigest, and release"
+        )
+    repository = str(release.get("repository", ""))
+    tag = str(release.get("tag", ""))
+    artifact = str(release.get("artifact", ""))
+    url = str(release.get("url", ""))
+    if not repository or not tag or not artifact or not url:
+        raise catalog_error(
+            f"catalog integration {identity} release needs repository, tag, artifact, and url"
+        )
+    if tag == "latest" or artifact == "latest":
+        raise catalog_error(f"catalog integration {identity} must not use a latest alias")
+    if "pypi.org" in url.lower():
+        raise catalog_error(
+            f"catalog integration {identity} canonical url must be a GitHub Release, not PyPI"
+        )
+    return GitHubReleaseCoordinate(
+        repository=repository,
+        tag=tag,
+        artifact=artifact,
+        url=url,
+        artifact_digest=artifact_digest,
+        manifest_digest=manifest_digest,
+    )
 
 
 _RECORDS = load_catalog_records()
@@ -255,13 +333,33 @@ def sorted_catalog_ids() -> tuple[str, ...]:
     return tuple(sorted(f"{item.capability_type}@{item.version}" for item in CAPABILITIES))
 
 
-def catalog_integration(identity: str, version: str | None = None) -> CatalogIntegration | None:
+def catalog_integration(
+    identity: str,
+    version: str | None = None,
+    *,
+    origin: str | None = None,
+) -> CatalogIntegration | None:
     matches = [item for item in INTEGRATIONS if item.identity == identity]
     if version:
         matches = [item for item in matches if item.version == version]
+    if origin:
+        matches = [item for item in matches if item.origin == origin]
     if len(matches) == 1:
         return matches[0]
+    if origin is None and len(matches) > 1:
+        packaged = [item for item in matches if item.origin == "packaged"]
+        if len(packaged) == 1:
+            return packaged[0]
+        github = [item for item in matches if item.origin == "github"]
+        if len(github) == 1:
+            return github[0]
     return None
+
+
+def github_catalog_integrations() -> tuple[CatalogIntegration, ...]:
+    return tuple(
+        item for item in INTEGRATIONS if item.origin == "github" and item.github is not None
+    )
 
 
 def search_catalog_integrations(

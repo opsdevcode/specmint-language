@@ -525,7 +525,7 @@ def _build_parser() -> argparse.ArgumentParser:
     resolve_integration.add_argument("--phase", required=True)
     add_integration = integrations_sub.add_parser(
         "add",
-        help="Pin a local or packaged integration; never pip or execute",
+        help="Pin a local, packaged, or github-catalog integration; never pip or execute",
     )
     add_integration.add_argument("identity", nargs="?", default="", help="Packaged identity")
     add_integration.add_argument("--project", required=True)

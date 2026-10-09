@@ -127,6 +127,11 @@ def test_ci_runs_documented_quickstart() -> None:
     ci = (REPO / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     assert "Documented quickstart" in ci
     assert "tests/test_quickstart.py" in ci
+    assert "GitHub integration assets" in ci
+    assert "verify_github_integration_assets.py" in ci
+    assert "pypi.org/project/mint-integration" not in ci
+    assert "gh release create" not in ci
+    assert "git tag" not in ci
 
 
 def test_compatibility_policy_keeps_release_please_and_github_first() -> None:

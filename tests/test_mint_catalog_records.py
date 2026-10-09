@@ -10,6 +10,7 @@ from opsdevcode_specmint.mint.catalog import (
     TARGET_KINDS,
     capability_for,
     catalog_integration,
+    github_catalog_integrations,
     load_catalog_records,
     search_catalog_integrations,
     sorted_catalog_ids,
@@ -65,15 +66,48 @@ def test_catalog_records_include_packaged_reference() -> None:
     assert found in matches
     github = catalog_integration("repo.github.plan", "0.1.0")
     assert github is not None
-    assert github.origin == "packaged"
+    assert github.origin == "github"
     assert github.execution_support == "fake"
     assert "execute" not in github.phases
+    assert github.github is not None
+    assert github.github.artifact_digest == (
+        "sha256:3c864b4f5e7298a0a2f52d0680cb5c3eb8ea57a8195e7d9ba628fe3b7b6e60da"
+    )
+    assert github.github.manifest_digest == (
+        "sha256:1b805a915d950c614c99089942252abbe6d846658afa741b28824330feba41f9"
+    )
     github_matches = search_catalog_integrations(query="github", target_kind_filter="repo.github")
     assert github in github_matches
     assert {item.identity for item in INTEGRATIONS} == {
         ENSURE_MARKER_TYPE,
         "repo.github.plan",
     }
+
+
+def test_github_catalog_coordinates_bind_recorded_release_digests() -> None:
+    packaged = catalog_integration(ENSURE_MARKER_TYPE, "0.1.0", origin="packaged")
+    github_local = catalog_integration(ENSURE_MARKER_TYPE, "0.1.0", origin="github")
+    assert packaged is not None
+    assert packaged.github is None
+    assert github_local is not None
+    assert github_local.github is not None
+    assert github_local.github.artifact_digest == (
+        "sha256:591e1b3ebdd7e4f9373996e0cdeafa62d8fea39d2640ded8270ff2e59c68094d"
+    )
+    assert github_local.github.manifest_digest == (
+        "sha256:cde4adf9e5f4c9e0b127cd11e6e977d25857d4a72602702ffe8a57223b05100e"
+    )
+    assert github_local.github.tag == "v0.2.0-alpha.1"
+    assert github_local.github.repository == "opsdevcode/mint-integration-local"
+    assert "pypi.org" not in github_local.github.url
+    assert github_local.github.tag != "latest"
+    recorded = github_catalog_integrations()
+    assert {item.identity for item in recorded} == {ENSURE_MARKER_TYPE, "repo.github.plan"}
+    for item in recorded:
+        assert item.origin == "github"
+        assert item.github is not None
+        assert item.github.artifact_digest.startswith("sha256:")
+        assert "pypi.org" not in item.summary.lower() or "not PyPI" in item.summary
 
 
 def first_capability_ids() -> set[str]:

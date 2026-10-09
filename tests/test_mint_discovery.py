@@ -154,6 +154,40 @@ def test_local_conformance_kit(tmp_path: Path) -> None:
     assert "refuse network source" in refused[2]
 
 
+def test_add_github_catalog_identity_binds_recorded_digests(tmp_path: Path) -> None:
+    project = _project(tmp_path)
+    code, out, err = _run(["integrations", "add", "--project", str(project), "repo.github.plan"])
+    assert code == 0, err
+    added = json.loads(out)
+    assert added["ok"] is True
+    assert added["executed"] is False
+    assert added["installed"] is False
+    assert added["network"] is False
+    assert added["origin"] == "github"
+    assert added["artifactDigest"] == (
+        "sha256:3c864b4f5e7298a0a2f52d0680cb5c3eb8ea57a8195e7d9ba628fe3b7b6e60da"
+    )
+    assert added["manifestDigest"] == (
+        "sha256:1b805a915d950c614c99089942252abbe6d846658afa741b28824330feba41f9"
+    )
+    lock = load_lockfile(project / "mint.lock")
+    assert lock.integrations[0].identity == "repo.github.plan"
+    assert lock.integrations[0].artifact_digest == added["artifactDigest"]
+    verify_code, verify_out, verify_err = _run(
+        ["integrations", "verify", "--project", str(project)]
+    )
+    assert verify_code == 0, verify_err
+    verified = json.loads(verify_out)
+    assert verified["ok"] is True
+    assert verified["executed"] is False
+    inspect_code, inspect_out, inspect_err = _run(["integrations", "inspect", "repo.github.plan"])
+    assert inspect_code == 0, inspect_err
+    inspected = json.loads(inspect_out)
+    assert inspected["catalog"]["origin"] == "github"
+    assert inspected["catalog"]["release"]["tag"] == "v0.2.0-alpha.1"
+    assert "pypi.org" not in inspect_out.lower()
+
+
 def test_verify_fails_on_tampered_digest(tmp_path: Path) -> None:
     project = _project(tmp_path)
     add_code, _out, add_err = _run(["integrations", "add", "--project", str(project), IDENTITY])
