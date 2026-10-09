@@ -10,7 +10,7 @@ from typing import Any
 from opsdevcode_specmint.integration.canonical import SCHEMA_PROTOCOL
 from opsdevcode_specmint.integration.framing import ProtocolError
 from opsdevcode_specmint.integration.models import parse_manifest
-from opsdevcode_specmint.integration.process import invoke, negotiate_request, phase_request
+from opsdevcode_specmint.integration.supervisor import ProcessSupervisor
 
 _FIXTURE_DIR = Path(__file__).with_name("fixtures")
 _PHASES = ("observe", "plan", "verify", "evidence")
@@ -65,20 +65,17 @@ def run_integration_test(
 ) -> dict[str, Any]:
     digest = "sha256:" + hashlib.sha256(artifact_bytes).hexdigest()
     kit = fixtures or load_kit_fixtures()
-    negotiated = invoke(
+    supervisor = ProcessSupervisor(
         argv,
-        negotiate_request(),
+        identity=identity,
+        version=version,
         artifact_digest=digest,
         artifact_bytes=artifact_bytes,
     )
+    negotiated = supervisor.negotiate()
     if "error" in negotiated:
         raise ProtocolError("MINT_PROTOCOL", "negotiation failed", kind="unsupported")
-    described = invoke(
-        argv,
-        phase_request("describe", {}, identity=identity, version=version),
-        artifact_digest=digest,
-        artifact_bytes=artifact_bytes,
-    )
+    described = supervisor.invoke_phase("describe", {})
     if "error" in described:
         raise ProtocolError("MINT_PROTOCOL", "describe failed")
     manifest = parse_manifest(described["result"]["payload"])
@@ -89,24 +86,14 @@ def run_integration_test(
     phases: list[str] = ["negotiate", "describe"]
     for phase in _PHASES:
         payload = kit.get(phase, {})
-        result = invoke(
-            argv,
-            phase_request(phase, payload, identity=identity, version=version),
-            artifact_digest=digest,
-            artifact_bytes=artifact_bytes,
-        )
+        result = supervisor.invoke_phase(phase, payload)
         if "error" in result:
             raise ProtocolError("MINT_PHASE", f"{phase} failed", kind="invalid")
         body = result["result"]["payload"]
         if not isinstance(body, dict):
             raise ProtocolError("MINT_PROTOCOL", f"{phase} payload must be an object")
         phases.append(phase)
-    refused = invoke(
-        argv,
-        phase_request("execute", {}, identity=identity, version=version),
-        artifact_digest=digest,
-        artifact_bytes=artifact_bytes,
-    )
+    refused = supervisor.invoke_phase("execute", {})
     error = refused.get("error")
     if not isinstance(error, dict) or error.get("code") != "MINT_PHASE":
         raise ProtocolError("MINT_PHASE", "execute must fail closed", kind="unsupported")

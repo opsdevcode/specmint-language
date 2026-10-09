@@ -1,7 +1,8 @@
 """Offline integration discovery and project pinning.
 
-search / inspect / add / remove / verify stay local. add never installs
-packages, never executes an integration, and never opens a network path.
+search / inspect / add / remove / verify / status / update stay local.
+add and update never install packages, never execute an integration, and
+never open a network path.
 """
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ from opsdevcode_specmint.integration.reference_server import (
     artifact_digest,
     manifest_document,
 )
+from opsdevcode_specmint.integration.supervisor import ProcessStatus
 from opsdevcode_specmint.mint.catalog import (
     CATALOG_RECORDS_SCHEMA,
     catalog_integration,
@@ -186,6 +188,68 @@ def verify_integrations(project: Path) -> dict[str, Any]:
                 "identity": item.identity,
                 "manifestDigest": item.manifest_digest,
                 "matched": True,
+                "origin": _origin_for(manifest, item.identity),
+                "version": item.version,
+            }
+            for item in lock.integrations
+        ],
+        "lock": LOCK_NAME,
+        "lockUpdated": True,
+        "network": False,
+        "ok": True,
+    }
+
+
+def status_integrations(project: Path) -> dict[str, Any]:
+    manifest = load_manifest(_project_manifest_path(project))
+    lock = check_lockfile(manifest)
+    statuses = [
+        ProcessStatus(
+            identity=item.identity,
+            version=item.version,
+            phase="",
+            running=False,
+            pid=None,
+            artifact_digest=item.artifact_digest,
+            last_digest="",
+            ok=True,
+            message="idle",
+        ).to_record()
+        | {"origin": _origin_for(manifest, item.identity)}
+        for item in lock.integrations
+    ]
+    return {
+        "action": "status",
+        "executed": False,
+        "integrations": statuses,
+        "lock": LOCK_NAME,
+        "network": False,
+        "ok": True,
+        "running": False,
+    }
+
+
+def update_integrations(project: Path) -> dict[str, Any]:
+    path = _project_manifest_path(project)
+    manifest = load_manifest(path)
+    refreshed = tuple(
+        _requirement_for_add(manifest, identity=item.source, local=item.local)
+        for item in manifest.integrations
+    )
+    updated = _with_integrations(manifest, refreshed)
+    write_manifest(updated)
+    lock = build_lockfile(updated)
+    write_lockfile(updated, lock)
+    return {
+        "action": "update",
+        "executed": False,
+        "installed": False,
+        "integrations": [
+            {
+                "artifactDigest": item.artifact_digest,
+                "identity": item.identity,
+                "manifestDigest": item.manifest_digest,
+                "origin": _origin_for(updated, item.identity),
                 "version": item.version,
             }
             for item in lock.integrations
@@ -193,7 +257,24 @@ def verify_integrations(project: Path) -> dict[str, Any]:
         "lock": LOCK_NAME,
         "network": False,
         "ok": True,
+        "pip": False,
+        "updated": True,
     }
+
+
+def _origin_for(manifest: ProjectManifest, identity: str) -> str:
+    for item in manifest.integrations:
+        if item.source != identity:
+            continue
+        if item.local:
+            return "local"
+        if item.source == REFERENCE_IDENTITY:
+            return "packaged"
+        record = catalog_integration(item.source, item.version, origin="github")
+        if record is not None:
+            return "github"
+        return "packaged"
+    return "unknown"
 
 
 def _requirement_for_add(
