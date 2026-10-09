@@ -49,13 +49,13 @@ jobs:
         run: |
           set -euo pipefail
           python -m venv /tmp/mint-compat/venv
-          /tmp/mint-compat/venv/bin/pip install --no-cache-dir --no-index \
+          /tmp/mint-compat/venv/bin/pip install --no-cache-dir \
             /tmp/mint-compat/language/specmint-0.7.0a2-py3-none-any.whl
           /tmp/mint-compat/venv/bin/python -c \
             "from importlib.metadata import version; assert version('specmint') == '0.7.0a2'"
           /tmp/mint-compat/venv/bin/mint version
           /tmp/mint-compat/venv/bin/mint check --project examples/projects/local-marker
-          /tmp/mint-compat/venv/bin/pip install --no-cache-dir --no-index \
+          /tmp/mint-compat/venv/bin/pip install --no-cache-dir \
             /tmp/mint-compat/local/mint_integration_local-0.2.1a1-py3-none-any.whl \
             /tmp/mint-compat/github/mint_integration_github-0.3.0a1-py3-none-any.whl
           /tmp/mint-compat/venv/bin/python -c \
