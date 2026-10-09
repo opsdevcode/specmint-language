@@ -188,6 +188,86 @@ def test_add_github_catalog_identity_binds_recorded_digests(tmp_path: Path) -> N
     assert "pypi.org" not in inspect_out.lower()
 
 
+def test_status_and_update_are_idle_and_offline(tmp_path: Path) -> None:
+    project = _project(tmp_path)
+    add_code, add_out, add_err = _run(["integrations", "add", "--project", str(project), IDENTITY])
+    assert add_code == 0, add_err
+    added = json.loads(add_out)
+    status_code, status_out, status_err = _run(
+        ["integrations", "status", "--project", str(project)]
+    )
+    assert status_code == 0, status_err
+    status = json.loads(status_out)
+    assert status["ok"] is True
+    assert status["running"] is False
+    assert status["executed"] is False
+    assert status["network"] is False
+    assert status["integrations"][0]["origin"] == "packaged"
+    assert status["integrations"][0]["running"] is False
+    assert status["integrations"][0]["pid"] is None
+    update_code, update_out, update_err = _run(
+        ["integrations", "update", "--project", str(project)]
+    )
+    assert update_code == 0, update_err
+    updated = json.loads(update_out)
+    assert updated["ok"] is True
+    assert updated["updated"] is True
+    assert updated["executed"] is False
+    assert updated["installed"] is False
+    assert updated["network"] is False
+    assert updated["pip"] is False
+    assert updated["integrations"][0]["artifactDigest"] == added["artifactDigest"]
+    lock_code, lock_out, lock_err = _run(["lock", "--project", str(project)])
+    assert lock_code == 0, lock_err
+    locked = json.loads(lock_out)
+    assert locked["updated"] is True
+    assert locked["integrations"][0]["identity"] == IDENTITY
+    verify_code, verify_out, verify_err = _run(
+        ["integrations", "verify", "--project", str(project)]
+    )
+    assert verify_code == 0, verify_err
+    verified = json.loads(verify_out)
+    assert verified["lockUpdated"] is True
+    assert verified["integrations"][0]["origin"] == "packaged"
+
+
+def test_status_and_update_bind_github_catalog_pins(tmp_path: Path) -> None:
+    project = _project(tmp_path)
+    add_code, add_out, add_err = _run(
+        ["integrations", "add", "--project", str(project), "repo.github.plan"]
+    )
+    assert add_code == 0, add_err
+    added = json.loads(add_out)
+    status_code, status_out, status_err = _run(
+        ["integrations", "status", "--project", str(project)]
+    )
+    assert status_code == 0, status_err
+    status = json.loads(status_out)
+    assert status["ok"] is True
+    assert status["running"] is False
+    assert status["executed"] is False
+    assert status["network"] is False
+    assert status["integrations"][0]["origin"] == "github"
+    assert status["integrations"][0]["running"] is False
+    update_code, update_out, update_err = _run(
+        ["integrations", "update", "--project", str(project)]
+    )
+    assert update_code == 0, update_err
+    updated = json.loads(update_out)
+    assert updated["ok"] is True
+    assert updated["pip"] is False
+    assert updated["network"] is False
+    assert updated["integrations"][0]["origin"] == "github"
+    assert updated["integrations"][0]["artifactDigest"] == added["artifactDigest"]
+    verify_code, verify_out, verify_err = _run(
+        ["integrations", "verify", "--project", str(project)]
+    )
+    assert verify_code == 0, verify_err
+    verified = json.loads(verify_out)
+    assert verified["lockUpdated"] is True
+    assert verified["integrations"][0]["origin"] == "github"
+
+
 def test_verify_fails_on_tampered_digest(tmp_path: Path) -> None:
     project = _project(tmp_path)
     add_code, _out, add_err = _run(["integrations", "add", "--project", str(project), IDENTITY])

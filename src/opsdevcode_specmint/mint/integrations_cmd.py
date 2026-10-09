@@ -29,6 +29,8 @@ from opsdevcode_specmint.mint.discovery import (
     refuse_network_source,
     remove_integration,
     search_integrations,
+    status_integrations,
+    update_integrations,
     verify_integrations,
 )
 from opsdevcode_specmint.mint.errors import MintError, coded_error
@@ -43,6 +45,8 @@ _COMMANDS = (
     "add",
     "remove",
     "verify",
+    "status",
+    "update",
     "conformance",
     "test",
 )
@@ -142,6 +146,14 @@ def run_integrations(args: Any, *, stdout: TextIO, stderr: TextIO) -> int:
         return 0
     if command == "verify":
         payload = verify_integrations(Path(args.project))
+        stdout.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+        return 0
+    if command == "status":
+        payload = status_integrations(Path(args.project))
+        stdout.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+        return 0
+    if command == "update":
+        payload = update_integrations(Path(args.project))
         stdout.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
         return 0
     if command in {"conformance", "test"}:
