@@ -21,6 +21,7 @@ from opsdevcode_specmint.mint.diagnostics import (
     display_path,
     render_diagnostic,
     render_payload,
+    render_sarif,
 )
 from opsdevcode_specmint.mint.doctor import run_doctor
 from opsdevcode_specmint.mint.errors import MintError, coded_error
@@ -73,12 +74,17 @@ def main(
         parser.print_help(out)
         return 0
     try:
-        return _dispatch(args, stdin=in_stream, stdout=out, stderr=err)
+        code = _dispatch(args, stdin=in_stream, stdout=out, stderr=err)
+        _maybe_write_sarif(args, None)
+        return code
     except MintError as exc:
+        _maybe_write_sarif(args, exc.diagnostic)
         err.write(render_diagnostic(exc.diagnostic, output_format=output_format))
         return 1
     except (OSError, ValueError, json.JSONDecodeError) as exc:
-        err.write(render_diagnostic(as_mint_error(exc).diagnostic, output_format=output_format))
+        diagnostic = as_mint_error(exc).diagnostic
+        _maybe_write_sarif(args, diagnostic)
+        err.write(render_diagnostic(diagnostic, output_format=output_format))
         return 1
 
 
@@ -197,6 +203,13 @@ def _write_bytes_confined(destination: Path, payload: bytes) -> None:
     tmp = dest.with_name(f"{dest.name}.tmp")
     tmp.write_bytes(payload)
     os.replace(tmp, dest)
+
+
+def _maybe_write_sarif(args: argparse.Namespace, diagnostic: Any) -> None:
+    raw = getattr(args, "sarif_output", None)
+    if not raw:
+        return
+    _write_bytes_confined(Path(raw), render_sarif(diagnostic).encode("utf-8"))
 
 
 def _run_convert(args: argparse.Namespace, *, stdin: IO[str], stdout: TextIO) -> int:
@@ -480,10 +493,10 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--output-format",
-        choices=("json", "human"),
+        choices=("json", "human", "sarif"),
         default=DEFAULT_OUTPUT_FORMAT,
         dest="output_format",
-        help="json or human for diagnostics and first-run output; not inferred from the TTY",
+        help="json, human, or sarif for diagnostics; not inferred from the TTY",
     )
     sub = parser.add_subparsers(dest="command")
     check = sub.add_parser("check", help="Type-check and catalog-check declared Mint units")
@@ -686,6 +699,11 @@ def _add_program_args(parser: argparse.ArgumentParser) -> None:
         help="Require mint.lock; only valid with --project",
     )
     _add_project_arg(parser)
+    parser.add_argument(
+        "--sarif-output",
+        dest="sarif_output",
+        help="Write SARIF 2.1.0 (empty results on success) for GitHub Code Scanning",
+    )
 
 
 def _add_project_arg(parser: argparse.ArgumentParser) -> None:
@@ -698,10 +716,10 @@ def _add_project_arg(parser: argparse.ArgumentParser) -> None:
 def _add_output_format_arg(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--output-format",
-        choices=("json", "human"),
+        choices=("json", "human", "sarif"),
         default=DEFAULT_OUTPUT_FORMAT,
         dest="output_format",
-        help="json or human; not inferred from the TTY",
+        help="json, human, or sarif; not inferred from the TTY",
     )
 
 

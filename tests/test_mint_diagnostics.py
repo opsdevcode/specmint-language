@@ -10,7 +10,9 @@ from opsdevcode_specmint.mint.diagnostics import (
     diagnostic_payload,
     display_path,
     render_diagnostic,
+    render_payload,
     sanitize_text,
+    sarif_log,
 )
 from opsdevcode_specmint.mint.errors import MintDiagnostic, parse_error
 from test_mint_cli import _run
@@ -96,3 +98,62 @@ def test_human_output_format_flag() -> None:
 def test_main_rejects_unknown_output_format() -> None:
     with pytest.raises(SystemExit):
         main(["--output-format", "pretty", "version"])
+
+
+def test_sarif_diagnostic_uses_rule_id_and_redacts_paths() -> None:
+    diagnostic = MintDiagnostic(
+        code="MINT_SNAPSHOT",
+        message="missing repository snapshot for /Users/example/repo.json",
+        line=2,
+        column=1,
+        unit="main.mint",
+        end_line=2,
+        end_column=8,
+    )
+    body = sarif_log(diagnostic)
+    assert body["version"] == "2.1.0"
+    run = body["runs"][0]
+    assert run["tool"]["driver"]["name"] == "mint"
+    assert run["results"][0]["ruleId"] == "MINT_SNAPSHOT"
+    assert "/Users/" not in run["results"][0]["message"]["text"]
+    assert run["results"][0]["locations"][0]["physicalLocation"]["region"]["startLine"] == 2
+    dumped = render_diagnostic(diagnostic, output_format="sarif")
+    assert json.loads(dumped)["runs"][0]["results"][0]["ruleId"] == "MINT_SNAPSHOT"
+
+
+def test_empty_sarif_log_has_no_results() -> None:
+    body = sarif_log(None)
+    assert body["runs"][0]["results"] == []
+    assert body["runs"][0]["tool"]["driver"]["rules"] == []
+
+
+def test_sarif_output_file_on_check_failure(tmp_path: Path) -> None:
+    dest = tmp_path / "mint.sarif"
+    code, out, err = _run(
+        ["--output-format", "sarif", "check", "-", "--sarif-output", str(dest)],
+        stdin="not mint",
+    )
+    assert code == 1
+    assert out == ""
+    stderr_body = json.loads(err)
+    assert stderr_body["version"] == "2.1.0"
+    assert stderr_body["runs"][0]["results"][0]["ruleId"] == "MINT_PARSE"
+    written = json.loads(dest.read_text(encoding="utf-8"))
+    assert written["runs"][0]["results"][0]["ruleId"] == "MINT_PARSE"
+
+
+def test_sarif_output_file_empty_on_check_success(tmp_path: Path) -> None:
+    dest = tmp_path / "mint.sarif"
+    project = Path("examples/projects/local-marker")
+    code, out, _err = _run(
+        ["check", "--project", str(project), "--sarif-output", str(dest)],
+    )
+    assert code == 0
+    assert json.loads(out)["ok"] is True
+    written = json.loads(dest.read_text(encoding="utf-8"))
+    assert written["runs"][0]["results"] == []
+
+
+def test_render_payload_refuses_sarif() -> None:
+    with pytest.raises(ValueError, match="mint check --sarif-output"):
+        render_payload({"ok": True}, output_format="sarif")

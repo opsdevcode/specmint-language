@@ -68,7 +68,9 @@ mint integrations inspect local.sandbox.ensure_marker
 `mint.lock` digests. They do not pip-install, execute, or leave a
 daemon running.
 
-`--output-format json|human` selects diagnostic and first-run output.
+`--output-format json|human|sarif` selects diagnostic and first-run output.
+Use `mint check --sarif-output mint.sarif` for GitHub Code Scanning. `init`
+and `doctor` stay `json` or `human`. See [adoption.md](adoption.md).
 The default is `json`. It is not inferred from the TTY.
 
 ## Where SpecMint begins
