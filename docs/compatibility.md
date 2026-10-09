@@ -28,7 +28,8 @@ SHA-256. Pin an integration by `manifestDigest` and `artifactDigest` in
 
 - Canonical MintIR for edition `v0`
 - `mint.toml` / `mint.lock` project model
-- `mint doctor`, `mint init --template`, and `--output-format json|human`
+- `mint doctor`, `mint init --template`, and `--output-format json|human|sarif`
+- `mint check --sarif-output PATH` for GitHub Code Scanning (empty results on success)
 - Integration Protocol `mint.integration/v0` and `mint.protocol/v0`
 - Public SDK entry points in ADR 019 (manifest-first and stdio JSON-RPC)
 - Local catalog records (`mint.catalog-records/v0`)

@@ -12,8 +12,11 @@ from opsdevcode_specmint.mint.errors import MintDiagnostic
 
 OUTPUT_JSON = "json"
 OUTPUT_HUMAN = "human"
-OUTPUT_FORMATS = frozenset({OUTPUT_JSON, OUTPUT_HUMAN})
+OUTPUT_SARIF = "sarif"
+OUTPUT_FORMATS = frozenset({OUTPUT_JSON, OUTPUT_HUMAN, OUTPUT_SARIF})
 DEFAULT_OUTPUT_FORMAT = OUTPUT_JSON
+SARIF_SCHEMA = "https://json.schemastore.org/sarif-2.1.0.json"
+SARIF_VERSION = "2.1.0"
 
 _HOST_PATH = re.compile(
     r"(?:(?:/Users|/home|/var|/private/var|/tmp|/opt)/[^\s\"',;]+|[A-Za-z]:\\[^\s\"',;]+)"
@@ -94,22 +97,94 @@ def render_diagnostic(diagnostic: MintDiagnostic, *, output_format: str) -> str:
     fmt = normalize_output_format(output_format)
     if fmt == OUTPUT_HUMAN:
         return render_human(diagnostic)
+    if fmt == OUTPUT_SARIF:
+        return render_sarif(diagnostic)
     return json.dumps(diagnostic_payload(diagnostic), indent=2, sort_keys=True) + "\n"
 
 
 def render_payload(payload: Mapping[str, Any], *, output_format: str) -> str:
     fmt = normalize_output_format(output_format)
+    if fmt == OUTPUT_SARIF:
+        raise ValueError(
+            "set --output-format to json or human for this command; "
+            "use mint check --sarif-output PATH for Code Scanning SARIF"
+        )
     body = _sanitize_payload(dict(payload))
     if fmt == OUTPUT_HUMAN:
         return _render_human_payload(body)
     return json.dumps(body, indent=2, sort_keys=True) + "\n"
 
 
+def render_sarif(diagnostic: MintDiagnostic | None = None) -> str:
+    return json.dumps(sarif_log(diagnostic), indent=2, sort_keys=True) + "\n"
+
+
+def sarif_log(diagnostic: MintDiagnostic | None = None) -> dict[str, Any]:
+    rules: list[dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
+    if diagnostic is not None:
+        payload = diagnostic_payload(diagnostic)
+        rules.append(
+            {
+                "id": payload["code"],
+                "shortDescription": {"text": payload["code"]},
+                "helpUri": "https://github.com/opsdevcode/specmint-language",
+            }
+        )
+        location: dict[str, Any] = {
+            "physicalLocation": {
+                "artifactLocation": {
+                    "uri": display_path(payload["unit"] or "stdin"),
+                }
+            }
+        }
+        region: dict[str, Any] = {}
+        span = payload.get("range")
+        if isinstance(span, dict):
+            start = span.get("start") or {}
+            end = span.get("end") or {}
+            if start.get("line") is not None:
+                region["startLine"] = start["line"]
+            if start.get("column") is not None:
+                region["startColumn"] = start["column"]
+            if end.get("line") is not None:
+                region["endLine"] = end["line"]
+            if end.get("column") is not None:
+                region["endColumn"] = end["column"]
+        if region:
+            location["physicalLocation"]["region"] = region
+        results.append(
+            {
+                "level": "error",
+                "locations": [location],
+                "message": {"text": payload["message"]},
+                "ruleId": payload["code"],
+            }
+        )
+    return {
+        "$schema": SARIF_SCHEMA,
+        "version": SARIF_VERSION,
+        "runs": [
+            {
+                "results": results,
+                "tool": {
+                    "driver": {
+                        "informationUri": "https://github.com/opsdevcode/specmint-language",
+                        "name": "mint",
+                        "rules": rules,
+                    }
+                },
+            }
+        ],
+    }
+
+
 def normalize_output_format(value: str | None) -> str:
     fmt = DEFAULT_OUTPUT_FORMAT if value is None else value
     if fmt not in OUTPUT_FORMATS:
         raise ValueError(
-            "set --output-format to json or human; output format is not inferred from the TTY"
+            "set --output-format to json, human, or sarif; "
+            "output format is not inferred from the TTY"
         )
     return fmt
 
