@@ -74,6 +74,19 @@
       "summary": "Observe, plan, verify, and evidence a local sandbox marker. Execute is refused.",
       "targetKinds": ["local.sandbox", "sandbox"],
       "version": "0.1.0"
+    },
+    {
+      "capabilities": [
+        {"id": "repo.settings", "version": "v1alpha1"}
+      ],
+      "executionSupport": "fake",
+      "identity": "repo.github.plan",
+      "name": "plan",
+      "origin": "packaged",
+      "phases": ["describe", "evidence", "observe", "plan", "validate", "verify"],
+      "summary": "Plan-only GitHub repository settings from a supplied snapshot. Execute is refused.",
+      "targetKinds": ["repo.github"],
+      "version": "0.1.0"
     }
   ],
   "schema": "mint.catalog-records/v0",
