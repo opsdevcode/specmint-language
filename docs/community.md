@@ -16,6 +16,7 @@ registry and does not admit Marketplace or Open VSX listings.
 - A live GitHub, cloud, or SaaS mutation from the language CLI
 - A pip install performed by `mint integrations add`
 - A catalog record for an artifact that does not yet exist
+- A PyPI coordinate for `mint-integration-local` or `mint-integration-github`
 
 ## Review
 

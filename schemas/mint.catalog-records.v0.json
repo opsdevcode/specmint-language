@@ -34,11 +34,24 @@
             },
             "type": "array"
           },
+          "artifactDigest": {"type": "string"},
           "executionSupport": {"enum": ["none", "fake", "privileged"]},
           "identity": {"type": "string"},
+          "manifestDigest": {"type": "string"},
           "name": {"type": "string"},
-          "origin": {"enum": ["packaged", "local"]},
+          "origin": {"enum": ["packaged", "local", "github"]},
           "phases": {"items": {"type": "string"}, "type": "array"},
+          "release": {
+            "additionalProperties": false,
+            "properties": {
+              "artifact": {"type": "string"},
+              "repository": {"type": "string"},
+              "tag": {"type": "string"},
+              "url": {"type": "string"}
+            },
+            "required": ["artifact", "repository", "tag", "url"],
+            "type": "object"
+          },
           "summary": {"type": "string"},
           "targetKinds": {"items": {"type": "string"}, "type": "array"},
           "version": {"type": "string"}
@@ -53,6 +66,17 @@
           "summary",
           "targetKinds",
           "version"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {"origin": {"const": "github"}},
+              "required": ["origin"]
+            },
+            "then": {
+              "required": ["artifactDigest", "manifestDigest", "release"]
+            }
+          }
         ],
         "type": "object"
       },

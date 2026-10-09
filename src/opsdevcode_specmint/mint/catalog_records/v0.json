@@ -76,15 +76,44 @@
       "version": "0.1.0"
     },
     {
+      "artifactDigest": "sha256:591e1b3ebdd7e4f9373996e0cdeafa62d8fea39d2640ded8270ff2e59c68094d",
+      "capabilities": [
+        {"id": "local.sandbox.ensure_marker", "version": "v1alpha1"}
+      ],
+      "executionSupport": "fake",
+      "identity": "local.sandbox.ensure_marker",
+      "manifestDigest": "sha256:cde4adf9e5f4c9e0b127cd11e6e977d25857d4a72602702ffe8a57223b05100e",
+      "name": "ensure_marker",
+      "origin": "github",
+      "phases": ["describe", "evidence", "observe", "plan", "validate", "verify"],
+      "release": {
+        "artifact": "mint_integration_local-0.2.0a1-py3-none-any.whl",
+        "repository": "opsdevcode/mint-integration-local",
+        "tag": "v0.2.0-alpha.1",
+        "url": "https://github.com/opsdevcode/mint-integration-local/releases/tag/v0.2.0-alpha.1"
+      },
+      "summary": "GitHub Release wheel for local.sandbox.ensure_marker. Canonical distribution is the prerelease, not PyPI.",
+      "targetKinds": ["local.sandbox", "sandbox"],
+      "version": "0.1.0"
+    },
+    {
+      "artifactDigest": "sha256:3c864b4f5e7298a0a2f52d0680cb5c3eb8ea57a8195e7d9ba628fe3b7b6e60da",
       "capabilities": [
         {"id": "repo.settings", "version": "v1alpha1"}
       ],
       "executionSupport": "fake",
       "identity": "repo.github.plan",
+      "manifestDigest": "sha256:1b805a915d950c614c99089942252abbe6d846658afa741b28824330feba41f9",
       "name": "plan",
-      "origin": "packaged",
+      "origin": "github",
       "phases": ["describe", "evidence", "observe", "plan", "validate", "verify"],
-      "summary": "Plan-only GitHub repository settings from a supplied snapshot. Execute is refused.",
+      "release": {
+        "artifact": "mint_integration_github-0.2.0a1-py3-none-any.whl",
+        "repository": "opsdevcode/mint-integration-github",
+        "tag": "v0.2.0-alpha.1",
+        "url": "https://github.com/opsdevcode/mint-integration-github/releases/tag/v0.2.0-alpha.1"
+      },
+      "summary": "Plan-only GitHub repository settings from a supplied snapshot. Canonical distribution is the GitHub prerelease, not PyPI. Execute is refused.",
       "targetKinds": ["repo.github"],
       "version": "0.1.0"
     }

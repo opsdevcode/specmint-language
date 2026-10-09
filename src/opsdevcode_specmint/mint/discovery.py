@@ -132,6 +132,9 @@ def add_integration(
     lock = build_lockfile(updated)
     write_lockfile(updated, lock)
     pinned = next(item for item in lock.integrations if item.identity == requirement.source)
+    origin = "local"
+    if not requirement.local:
+        origin = "packaged" if requirement.source == REFERENCE_IDENTITY else "github"
     return {
         "action": "add",
         "artifactDigest": pinned.artifact_digest,
@@ -142,6 +145,7 @@ def add_integration(
         "manifestDigest": pinned.manifest_digest,
         "network": False,
         "ok": True,
+        "origin": origin,
         "version": requirement.version,
     }
 
@@ -211,21 +215,33 @@ def _requirement_for_add(
             realization="",
         )
     chosen = identity.strip() or REFERENCE_IDENTITY
-    if chosen != REFERENCE_IDENTITY:
+    if chosen == REFERENCE_IDENTITY:
+        packaged = parse_manifest(manifest_document()).document
+        if packaged["artifact"]["digest"] != artifact_digest():
+            raise coded_error("MINT_DIGEST", f"artifact digest mismatch for {REFERENCE_IDENTITY}")
+        return ProjectIntegration(
+            source=REFERENCE_IDENTITY,
+            version=REFERENCE_VERSION,
+            local="",
+            capabilities=tuple(str(item["id"]) for item in packaged["capabilities"]),
+            targets=tuple(str(item) for item in packaged["targetKinds"]),
+            phases=tuple(str(item) for item in packaged["phases"]),
+            realization="",
+        )
+    record = catalog_integration(chosen, origin="github")
+    if record is None or record.github is None:
         raise coded_error(
             "MINT_INTEGRATION",
-            f"missing local manifest for {chosen}; pass --local PATH or pin {REFERENCE_IDENTITY}",
+            f"missing local manifest for {chosen}; pass --local PATH or pin a "
+            "github catalog identity",
         )
-    packaged = parse_manifest(manifest_document()).document
-    if packaged["artifact"]["digest"] != artifact_digest():
-        raise coded_error("MINT_DIGEST", f"artifact digest mismatch for {REFERENCE_IDENTITY}")
     return ProjectIntegration(
-        source=REFERENCE_IDENTITY,
-        version=REFERENCE_VERSION,
+        source=record.identity,
+        version=record.version,
         local="",
-        capabilities=tuple(str(item["id"]) for item in packaged["capabilities"]),
-        targets=tuple(str(item) for item in packaged["targetKinds"]),
-        phases=tuple(str(item) for item in packaged["phases"]),
+        capabilities=tuple(capability_id for capability_id, _version in record.capabilities),
+        targets=record.target_kinds,
+        phases=record.phases,
         realization="",
     )
 

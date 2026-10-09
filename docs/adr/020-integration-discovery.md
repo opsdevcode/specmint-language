@@ -22,6 +22,12 @@ are `MINT_INTEGRATION`. A hosted registry stays deferred. Catalog
 records for third-party artifacts are added only after those public
 artifacts exist.
 
+Standalone public integrations are GitHub-first. Catalog `origin`
+`github` stores the GitHub Release wheel digest and the tagged
+`mint-integration.json` digest. `add` may pin those recorded
+coordinates without downloading. PyPI is not the integration install
+path. There is no `latest` alias.
+
 ## Consequences
 
 - Language compile and plan stay offline.

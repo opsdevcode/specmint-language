@@ -624,10 +624,15 @@ def _integration_lock_entries(manifest: ProjectManifest) -> tuple[LockedIntegrat
                 ) from None
             pinned_artifact = _digest_bytes(artifact_file.read_bytes())
         else:
+            github_lock = _github_lock_entry(requirement)
+            if github_lock is not None:
+                pinned.append(github_lock)
+                continue
             if requirement.source != "local.sandbox.ensure_marker":
                 raise coded_error(
                     "MINT_INTEGRATION",
-                    f"missing local manifest for {requirement.source}; registry deferred",
+                    f"missing local manifest for {requirement.source}; "
+                    "pass --local PATH or pin a github catalog identity",
                 )
             manifest_doc = manifest_document()
             pinned_artifact = artifact_digest()
@@ -659,6 +664,33 @@ def _integration_lock_entries(manifest: ProjectManifest) -> tuple[LockedIntegrat
             )
         )
     return tuple(pinned)
+
+
+def _github_lock_entry(requirement: ProjectIntegration) -> LockedIntegration | None:
+    from opsdevcode_specmint.mint.catalog import catalog_integration
+
+    if requirement.source == "local.sandbox.ensure_marker":
+        return None
+    record = catalog_integration(requirement.source, requirement.version, origin="github")
+    if record is None or record.github is None:
+        return None
+    if requirement.version != record.version:
+        raise coded_error(
+            "MINT_INTEGRATION",
+            f"integration {requirement.source} does not match the required version",
+        )
+    coordinate = record.github
+    return LockedIntegration(
+        identity=record.identity,
+        version=record.version,
+        protocol="mint.protocol/v0",
+        manifest_digest=coordinate.manifest_digest,
+        artifact_digest=coordinate.artifact_digest,
+        schema_digests=(("mint.integration/v0", _schema_digest()),),
+        capabilities=record.capabilities,
+        target_kinds=record.target_kinds,
+        phases=record.phases,
+    )
 
 
 def _schema_digest() -> str:
