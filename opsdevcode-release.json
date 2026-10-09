@@ -1,0 +1,45 @@
+{
+  "schema": "opsdevcode.release/v0",
+  "repository": "opsdevcode/specmint-language",
+  "profile": "mint-language",
+  "canonical": "github-release",
+  "engine": "release-please",
+  "tagPolicy": {
+    "manualTags": false,
+    "retag": false,
+    "pattern": "^v0\\.[0-9]+\\.[0-9]+-alpha\\.[0-9]+$"
+  },
+  "prerelease": {
+    "githubMakeLatest": false
+  },
+  "downstream": {
+    "pypi": {
+      "role": "mirror"
+    },
+    "ghcr": {
+      "role": "none",
+      "latest": false,
+      "visibilityChange": false
+    },
+    "marketplace": {
+      "role": "deferred"
+    },
+    "openvsx": {
+      "role": "deferred"
+    },
+    "pages": {
+      "role": "mirror"
+    }
+  },
+  "artifacts": [
+    "wheel",
+    "sdist",
+    "vsix",
+    "sha256sums",
+    "sbom"
+  ],
+  "provenance": {
+    "synthesize": false
+  },
+  "notes": "PyPI is a mirror of GitHub Release bytes. Marketplace/Open VSX deferred."
+}
