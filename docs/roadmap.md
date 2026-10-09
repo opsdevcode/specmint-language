@@ -14,6 +14,8 @@ It is not a delivery schedule.
 ## Deferred (not claimed)
 
 - Hosted integration registry
+- Integration packages on PyPI
+- A Kubernetes snapshot integration
 - Signing and OCI delivery of integrations
 - Production trust service
 - Live AWS, Azure, GCP, Kubernetes, GitHub, or SaaS mutation from Mint
