@@ -54,7 +54,19 @@ What each step does:
 Planning does not write a sandbox marker. The integration declares
 `executionSupport: fake` and refuses `execute`. The conformance kit covers
 observation, plan, verification, and evidence. Catalog records are local
-JSON data. There is no hosted registry.
+JSON data. There is no hosted registry. Standalone integration wheels
+are GitHub Release assets, not PyPI packages.
+
+Discover and pin without network:
+
+```bash
+mint integrations search sandbox
+mint integrations inspect local.sandbox.ensure_marker
+```
+
+`add`, `remove`, `verify`, `status`, and `update` bind or refresh
+`mint.lock` digests. They do not pip-install, execute, or leave a
+daemon running.
 
 `--output-format json|human` selects diagnostic and first-run output.
 The default is `json`. It is not inferred from the TTY.

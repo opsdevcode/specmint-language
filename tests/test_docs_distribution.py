@@ -16,6 +16,7 @@ CURRENT_INSTALL_DOCS = (
     REPO / "docs" / "quickstart.md",
     REPO / "docs" / "releases.md",
     REPO / "docs" / "compatibility.md",
+    REPO / "docs" / "standalone.md",
     REPO / "editors" / "vscode" / "README.md",
     REPO / "specification" / "mint" / "v0" / "editor.md",
 )
@@ -49,6 +50,18 @@ def test_current_install_docs_are_unpinned() -> None:
         assert "/releases/latest" not in text
         for claim in MARKETPLACE_PUBLISH_CLAIMS:
             assert claim not in text, f"{path} still claims {claim}"
+
+
+def test_compatibility_matrix_names_wave2_surfaces() -> None:
+    text = (REPO / "docs" / "compatibility.md").read_text(encoding="utf-8")
+    assert "search inspect add remove verify status update test" in text
+    assert "one-shot stdio" in text
+    assert "no daemon" in text
+    assert "mint-integration-local" in text
+    assert "mint-integration-github" in text
+    assert "no integration PyPI claim" in text
+    assert "Kubernetes snapshot integration" in text
+    assert "pypi.org/project/mint-integration" not in text
 
 
 def test_install_docs_are_github_first() -> None:
@@ -113,6 +126,8 @@ def test_docs_site_builds_index(tmp_path: Path) -> None:
     assert 'rel="canonical" href="https://opsdevcode.github.io/specmint-language/"' in index
     assert 'href="specification/mint/v0/language.html"' in index
     assert (out / "docs" / "quickstart.html").is_file()
+    assert (out / "docs" / "standalone.html").is_file()
+    assert (out / "docs" / "compatibility.html").is_file()
     assert (out / "specification" / "mint" / "v0" / "language.html").is_file()
     assert (out / "specification" / "mint" / "v0" / "grammar.ebnf").is_file()
     assert (out / ".nojekyll").is_file()

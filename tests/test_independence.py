@@ -21,3 +21,21 @@ def test_language_does_not_import_product_packages() -> None:
                 if name in FORBIDDEN:
                     offenders.append(f"{path}:{name}")
     assert offenders == []
+
+
+def test_standalone_doc_matches_import_boundary() -> None:
+    text = (Path(__file__).resolve().parents[1] / "docs" / "standalone.md").read_text(
+        encoding="utf-8"
+    )
+    assert "does not import" in text
+    assert "Repave" in text
+    assert "Overpass" in text
+    assert "Toll" in text
+    assert "Dispatch" in text
+    assert "Relay" in text
+    assert "mint apply" in text
+    assert "not PyPI" in text
+    assert "Kubernetes" in text
+    assert "snapshot integration" in text
+    assert "mint-integration-local" in text
+    assert "mint-integration-github" in text
