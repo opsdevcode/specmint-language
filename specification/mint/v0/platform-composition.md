@@ -6,7 +6,8 @@ composite plan, approval, execution, verification, and evidence against
 fake-local providers.
 
 This language repository does not import Overpass, Toll, Dispatch, Repave,
-or Relay. It does not call live providers. There is no `mint apply`.
+or Relay. It does not call live providers. It does not require a hosted
+service. There is no `mint apply`. See [standalone architecture](../../../docs/standalone.md).
 
 See [`opsdevcode/specmint-platform`](https://github.com/opsdevcode/specmint-platform)
 ADR 016.

@@ -8,17 +8,21 @@ repository will not claim production stability.
 | Surface | Contract | Compatible with |
 | --- | --- | --- |
 | Language edition | `v0` | MintIR `v0`, `mint.project/v0`, `mint.lock/v0` |
-| Integration protocol | `mint.protocol/v0` | stdio JSON-RPC; fail-closed `execute` |
+| Language CLI | `specmint` on PyPI | GitHub Releases for VSIX; no `latest` |
+| Integration protocol | `mint.protocol/v0` | one-shot stdio JSON-RPC; fail-closed `execute` |
+| Process supervisor | pinned executable argv | idle after invoke; no daemon |
 | Integration manifest | `mint.integration/v0` | ADR 019 SDK; `mint integrations check` |
 | Catalog records | `mint.catalog-records/v0` | local data; packaged or github origin |
-| Discovery CLI | `search inspect add remove verify test` | lockfile digest bind; no network |
+| Discovery CLI | `search inspect add remove verify status update test` | lockfile digest bind; no network |
+| Local integration | GitHub Release `mint-integration-local` | recorded wheel and manifest digests |
+| GitHub integration | GitHub Release `mint-integration-github` | plan-only `mint.repository-snapshot/v0` |
 | Adapter alias | `mint.adapter/v0` | lossless plan-only mapping until 0.2.0 |
 
 Pin a language release by Git tag (`v0.x.y-alpha.N`) and artifact
 SHA-256. Pin an integration by `manifestDigest` and `artifactDigest` in
-`mint.lock`. GitHub Releases are canonical for `mint-integration-local`
-and `mint-integration-github`. There is no `latest` tag, no hosted
-registry, and no integration PyPI claim.
+`mint.lock`. GitHub Releases are canonical for
+`mint-integration-local` and `mint-integration-github`. There is no
+`latest` tag, no hosted registry, and no integration PyPI claim.
 
 ## Kept in the current public preview
 
@@ -28,7 +32,8 @@ registry, and no integration PyPI claim.
 - Integration Protocol `mint.integration/v0` and `mint.protocol/v0`
 - Public SDK entry points in ADR 019 (manifest-first and stdio JSON-RPC)
 - Local catalog records (`mint.catalog-records/v0`)
-- Offline discovery: `mint integrations search|inspect|add|remove|verify`
+- Offline discovery: `mint integrations search|inspect|add|remove|verify|status|update`
+- One-shot process supervisor; `status` is idle with `running=false`
 - Lockfile digest bind for pinned integrations (ADR 020)
 - `mint integrations test` conformance kit
 - `mint.adapter/v0` as a lossless alpha compatibility path
@@ -52,11 +57,15 @@ and Open VSX publication stay deferred.
 - `mint apply`
 - live provider SDKs
 - a hosted integration registry
-- hidden network on `search`, `add`, or `verify`
-- `add` that pip-installs or executes an integration
+- integration packages on PyPI
+- a Kubernetes snapshot integration
+- hidden network on `search`, `add`, `verify`, `status`, or `update`
+- `add` or `update` that pip-installs or executes an integration
+- a persistent integration daemon
 - CUE evaluation of caller-supplied programs
 - production-ready or 1.0 claims
 - VS Code Marketplace or Open VSX publish jobs
+- imports of Repave, Overpass, Toll, Dispatch, or Relay
 
 Pin a release by Git tag (`v0.x.y-alpha.N`) and artifact SHA-256 from
 the GitHub prerelease. There is no `latest` tag. The VSIX is that
