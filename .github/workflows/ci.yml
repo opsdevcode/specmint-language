@@ -69,8 +69,8 @@ jobs:
           python -m venv /tmp/mint-local-install
           /tmp/mint-local-install/bin/pip install --no-cache-dir --no-index \
             /tmp/mint-github-assets/mint-integration-local/mint_integration_local-0.2.0a1-py3-none-any.whl
-          /tmp/mint-local-install/bin/pip show mint-integration-local | grep -q 'Version: 0.2.0a1'
+          /tmp/mint-local-install/bin/python -c "from importlib.metadata import version; assert version('mint-integration-local') == '0.2.0a1'"
           python -m venv /tmp/mint-github-install
           /tmp/mint-github-install/bin/pip install --no-cache-dir --no-index \
             /tmp/mint-github-assets/mint-integration-github/mint_integration_github-0.2.0a1-py3-none-any.whl
-          /tmp/mint-github-install/bin/pip show mint-integration-github | grep -q 'Version: 0.2.0a1'
+          /tmp/mint-github-install/bin/python -c "from importlib.metadata import version; assert version('mint-integration-github') == '0.2.0a1'"
