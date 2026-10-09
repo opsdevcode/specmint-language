@@ -90,6 +90,8 @@ and/or `mint project check`. Do not mix paths/`--graph` with
 | `mint integrations add --project DIR [IDENTITY] [--local PATH]` | Pin packaged, github-catalog, or local digests; never pip or execute |
 | `mint integrations remove --project DIR IDENTITY` | Unpin and refresh `mint.lock` |
 | `mint integrations verify --project DIR` | Recompute pinned digests; do not execute |
+| `mint integrations status --project DIR` | Idle process supervisor status; no daemon |
+| `mint integrations update --project DIR` | Refresh packaged, github-catalog, or local pins; never pip |
 | `mint integrations test` | Observe/plan/verify/evidence conformance kit |
 | `mint adapters` | Deprecated alias of `mint integrations` |
 | `mint lsp` | Stdio language server over `compile_program` |
