@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.5.0-alpha.2...v0.6.0-alpha.2) (2026-10-09)
+
+
+### Features
+
+* **mint:** bind github-first catalog coordinates ([#25](https://github.com/opsdevcode/specmint-language/issues/25)) ([41eddf0](https://github.com/opsdevcode/specmint-language/commit/41eddf0e79bcbf514a9ab83e9e8bdf0453c5d751))
+
 ## [0.5.0-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.4.0-alpha.2...v0.5.0-alpha.2) (2026-10-09)
 
 
