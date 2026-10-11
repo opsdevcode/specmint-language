@@ -206,7 +206,9 @@ def markdown_to_html(
         line = raw.rstrip()
         if in_fence:
             if _FENCE.match(line):
-                body.append("<pre><code>" + html.escape("\n".join(fence)) + "</code></pre>")
+                body.append(
+                    '<pre tabindex="0"><code>' + html.escape("\n".join(fence)) + "</code></pre>"
+                )
                 fence.clear()
                 in_fence = False
             else:
@@ -265,7 +267,7 @@ def markdown_to_html(
         para.append(line.strip())
 
     if in_fence:
-        body.append("<pre><code>" + html.escape("\n".join(fence)) + "</code></pre>")
+        body.append('<pre tabindex="0"><code>' + html.escape("\n".join(fence)) + "</code></pre>")
     flush_para()
     _flush_list(list_kind, list_items, body)
     flush_table()
@@ -382,6 +384,7 @@ def page_html(
     footer {{ margin-top: 2.5rem; font-size: 0.9rem; color: #3f3f46; }}
     a {{ color: #0b57d0; }}
     pre {{ overflow: auto; padding: 0.75rem; background: #f4f4f5; }}
+    pre:focus {{ outline: 2px solid #0b57d0; outline-offset: 2px; }}
     code {{ font-family: ui-monospace, SFMono-Regular, monospace; }}
     table {{ border-collapse: collapse; width: 100%; }}
     th, td {{ border: 1px solid #d4d4d8; padding: 0.4rem 0.6rem; text-align: left; }}
