@@ -191,6 +191,9 @@ def test_docs_site_builds_public_routes(tmp_path: Path) -> None:
     assert "pipx install specmint" in quickstart
     assert "Install from VSIX" in quickstart
     assert "0.1.0a2" not in quickstart
+    assert '<pre tabindex="0">' in quickstart
+    assert quickstart.count("<pre>") == 0
+    assert "pre:focus" in quickstart
     assert RELEASES_URL in index
     cnamed = subprocess.run(
         [
