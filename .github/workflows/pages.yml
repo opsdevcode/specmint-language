@@ -1,9 +1,9 @@
 name: GitHub Pages
 
 # Canonical URLs in the artifact: https://mint.opsdevco.de/
-# Published host until DNS/CNAME is proven:
-# https://opsdevcode.github.io/specmint-language/
-# Do not pass --cname until mint.opsdevco.de answers anonymous HTTP 200.
+# GitHub Pages remains a fallback mirror (opsdevcode.github.io/specmint-language).
+# Cluster serving is ghcr.io/opsdevcode/mint from this Dockerfile, not Pages.
+# Do not pass --cname. Do not enable Pages https_enforced as production.
 # This workflow does not mutate Route53 or Pulumi. Do not add analytics.
 
 on:
