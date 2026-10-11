@@ -22,7 +22,10 @@ Pin a language release by Git tag (`v0.x.y-alpha.N`) and artifact
 SHA-256. Pin an integration by `manifestDigest` and `artifactDigest` in
 `mint.lock`. GitHub Releases are canonical for
 `mint-integration-local` and `mint-integration-github`. There is no
-`latest` tag, no hosted registry, and no integration PyPI claim.
+`latest` tag, no hosted registry service, and no integration PyPI claim.
+Community records are static `mint.catalog-records/v0` in
+`opsdevcode/mint-registry`, cached locally by
+`mint integrations update --registry`.
 
 ## Kept in the current public preview
 

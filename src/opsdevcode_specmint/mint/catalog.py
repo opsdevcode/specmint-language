@@ -54,14 +54,18 @@ class GitHubReleaseCoordinate:
     url: str
     artifact_digest: str
     manifest_digest: str
+    commit: str = ""
 
     def to_record(self) -> dict[str, Any]:
-        return {
+        record = {
             "artifact": self.artifact,
             "repository": self.repository,
             "tag": self.tag,
             "url": self.url,
         }
+        if self.commit:
+            record["commit"] = self.commit
+        return record
 
 
 @dataclass(frozen=True, slots=True)
@@ -99,12 +103,20 @@ class CatalogIntegration:
         return record
 
 
+REGISTRY_CACHE_RELATIVE = Path(".mint") / "catalog-records.json"
+
+
 def catalog_records_path() -> Path:
     return Path(__file__).with_name("catalog_records") / "v0.json"
 
 
-def load_catalog_records() -> dict[str, Any]:
-    raw = json.loads(catalog_records_path().read_text(encoding="utf-8"))
+def registry_cache_path(project: Path) -> Path:
+    return project / REGISTRY_CACHE_RELATIVE
+
+
+def load_catalog_records(path: Path | None = None) -> dict[str, Any]:
+    source = catalog_records_path() if path is None else path
+    raw = json.loads(source.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise catalog_error("catalog records must be a JSON object")
     if raw.get("schema") != CATALOG_RECORDS_SCHEMA:
@@ -274,6 +286,12 @@ def _github_coordinate(
     tag = str(release.get("tag", ""))
     artifact = str(release.get("artifact", ""))
     url = str(release.get("url", ""))
+    commit = str(release.get("commit", ""))
+    extra_release = sorted(set(release) - {"artifact", "commit", "repository", "tag", "url"})
+    if extra_release:
+        raise catalog_error(
+            f"catalog integration {identity} release must omit unknown keys {extra_release}"
+        )
     if not repository or not tag or not artifact or not url:
         raise catalog_error(
             f"catalog integration {identity} release needs repository, tag, artifact, and url"
@@ -284,6 +302,10 @@ def _github_coordinate(
         raise catalog_error(
             f"catalog integration {identity} canonical url must be a GitHub Release, not PyPI"
         )
+    if commit and (len(commit) != 40 or any(ch not in "0123456789abcdef" for ch in commit)):
+        raise catalog_error(
+            f"catalog integration {identity} release commit must be a 40-character lowercase SHA"
+        )
     return GitHubReleaseCoordinate(
         repository=repository,
         tag=tag,
@@ -291,6 +313,7 @@ def _github_coordinate(
         url=url,
         artifact_digest=artifact_digest,
         manifest_digest=manifest_digest,
+        commit=commit,
     )
 
 
@@ -300,6 +323,26 @@ CAPABILITIES: tuple[CapabilityDecl, ...] = _capabilities_from_records(_RECORDS)
 INTEGRATIONS: tuple[CatalogIntegration, ...] = _integrations_from_records(_RECORDS)
 ENSURE_MARKER = CatalogEntry(ENSURE_MARKER_TYPE, ENSURE_MARKER_VERSION)
 CATALOG: frozenset[CatalogEntry] = frozenset({ENSURE_MARKER})
+
+
+def overlay_integrations(cache: Path | None) -> tuple[CatalogIntegration, ...]:
+    if cache is None or not cache.is_file() or cache.is_symlink():
+        return INTEGRATIONS
+    extra = _integrations_from_records(load_catalog_records(cache))
+    ranked: dict[tuple[str, str, str], CatalogIntegration] = {
+        (item.identity, item.origin, item.version): item for item in INTEGRATIONS
+    }
+    for item in extra:
+        ranked[(item.identity, item.origin, item.version)] = item
+    return tuple(
+        sorted(ranked.values(), key=lambda item: (item.identity, item.origin, item.version))
+    )
+
+
+def integrations_for_project(project: Path | None) -> tuple[CatalogIntegration, ...]:
+    if project is None:
+        return INTEGRATIONS
+    return overlay_integrations(registry_cache_path(project))
 
 
 def bind_catalog_entry(*, automation_type: str, version: str) -> CatalogEntry:
@@ -338,8 +381,10 @@ def catalog_integration(
     version: str | None = None,
     *,
     origin: str | None = None,
+    records: tuple[CatalogIntegration, ...] | None = None,
 ) -> CatalogIntegration | None:
-    matches = [item for item in INTEGRATIONS if item.identity == identity]
+    pool = INTEGRATIONS if records is None else records
+    matches = [item for item in pool if item.identity == identity]
     if version:
         matches = [item for item in matches if item.version == version]
     if origin:
@@ -356,10 +401,11 @@ def catalog_integration(
     return None
 
 
-def github_catalog_integrations() -> tuple[CatalogIntegration, ...]:
-    return tuple(
-        item for item in INTEGRATIONS if item.origin == "github" and item.github is not None
-    )
+def github_catalog_integrations(
+    records: tuple[CatalogIntegration, ...] | None = None,
+) -> tuple[CatalogIntegration, ...]:
+    pool = INTEGRATIONS if records is None else records
+    return tuple(item for item in pool if item.origin == "github" and item.github is not None)
 
 
 def search_catalog_integrations(
@@ -367,10 +413,12 @@ def search_catalog_integrations(
     query: str = "",
     capability: str = "",
     target_kind_filter: str = "",
+    records: tuple[CatalogIntegration, ...] | None = None,
 ) -> tuple[CatalogIntegration, ...]:
     needle = query.strip().lower()
     found: list[CatalogIntegration] = []
-    for item in INTEGRATIONS:
+    pool = INTEGRATIONS if records is None else records
+    for item in pool:
         haystack = " ".join(
             [
                 item.identity,

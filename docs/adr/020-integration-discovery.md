@@ -18,9 +18,10 @@ records (`mint.catalog-records/v0`) and project-relative manifests.
   not execute.
 
 Network-shaped sources (`http`, `https`, `git+`, `github.com`, PyPI)
-are `MINT_INTEGRATION`. A hosted registry stays deferred. Catalog
-records for third-party artifacts are added only after those public
-artifacts exist.
+are `MINT_INTEGRATION`. A hosted registry stays deferred. The community
+catalog is static GitHub JSON (`opsdevcode/mint-registry`) cached by
+`mint integrations update --registry` (ADR 021). Catalog records for
+third-party artifacts are added only after those public artifacts exist.
 
 Standalone public integrations are GitHub-first. Catalog `origin`
 `github` stores the GitHub Release wheel digest and the tagged

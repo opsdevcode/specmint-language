@@ -71,7 +71,7 @@ def test_catalog_records_include_packaged_reference() -> None:
     assert "execute" not in github.phases
     assert github.github is not None
     assert github.github.artifact_digest == (
-        "sha256:3c864b4f5e7298a0a2f52d0680cb5c3eb8ea57a8195e7d9ba628fe3b7b6e60da"
+        "sha256:2307ee7cb58229851b42b02408bb7eb5d9ce3b2878153e6b620a8e54a0c9a0e5"
     )
     assert github.github.manifest_digest == (
         "sha256:1b805a915d950c614c99089942252abbe6d846658afa741b28824330feba41f9"
@@ -92,12 +92,13 @@ def test_github_catalog_coordinates_bind_recorded_release_digests() -> None:
     assert github_local is not None
     assert github_local.github is not None
     assert github_local.github.artifact_digest == (
-        "sha256:591e1b3ebdd7e4f9373996e0cdeafa62d8fea39d2640ded8270ff2e59c68094d"
+        "sha256:1cf952cceb4fec8008b42b5a6e12e1f604d24dec37fcbcb7371dfc7eb3a3a35d"
     )
     assert github_local.github.manifest_digest == (
         "sha256:cde4adf9e5f4c9e0b127cd11e6e977d25857d4a72602702ffe8a57223b05100e"
     )
-    assert github_local.github.tag == "v0.2.0-alpha.1"
+    assert github_local.github.tag == "v0.2.1-alpha.1"
+    assert github_local.github.commit == "c0fc6e734a2ffbe95508a6cc9183b382d458bcd6"
     assert github_local.github.repository == "opsdevcode/mint-integration-local"
     assert "pypi.org" not in github_local.github.url
     assert github_local.github.tag != "latest"

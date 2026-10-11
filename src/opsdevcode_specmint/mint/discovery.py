@@ -27,6 +27,10 @@ from opsdevcode_specmint.integration.supervisor import ProcessStatus
 from opsdevcode_specmint.mint.catalog import (
     CATALOG_RECORDS_SCHEMA,
     catalog_integration,
+    integrations_for_project,
+    load_catalog_records,
+    overlay_integrations,
+    registry_cache_path,
     search_catalog_integrations,
 )
 from opsdevcode_specmint.mint.errors import coded_error
@@ -71,19 +75,26 @@ def search_integrations(
     query: str = "",
     capability: str = "",
     target_kind: str = "",
+    cache: Path | None = None,
+    project: Path | None = None,
 ) -> dict[str, Any]:
     refuse_network_source(query, label="search query")
     refuse_network_source(capability, label="capability filter")
     refuse_network_source(target_kind, label="target-kind filter")
+    if cache is not None:
+        refuse_network_source(str(cache), label="search --cache")
     records = [
         item.to_record()
         for item in search_catalog_integrations(
             query=query,
             capability=capability,
             target_kind_filter=target_kind,
+            records=_records(project=project, cache=cache),
         )
     ]
     return {
+        "cache": cache is not None
+        or (project is not None and registry_cache_path(project).is_file()),
         "integrations": records,
         "network": False,
         "ok": True,
@@ -92,11 +103,11 @@ def search_integrations(
     }
 
 
-def inspect_integration(identity: str) -> dict[str, Any]:
+def inspect_integration(identity: str, *, project: Path | None = None) -> dict[str, Any]:
     refuse_network_source(identity, label="inspect identity")
     if identity == REFERENCE_IDENTITY:
         return manifest_document()
-    record = catalog_integration(identity)
+    record = catalog_integration(identity, records=integrations_for_project(project))
     if record is None:
         raise coded_error("MINT_INTEGRATION", f"unknown integration {identity}")
     return {
@@ -229,8 +240,13 @@ def status_integrations(project: Path) -> dict[str, Any]:
     }
 
 
-def update_integrations(project: Path) -> dict[str, Any]:
+def update_integrations(project: Path, *, registry: str = "") -> dict[str, Any]:
+    refuse_network_source(registry, label="update --registry")
     path = _project_manifest_path(project)
+    cached = False
+    if registry.strip():
+        _write_registry_cache(path.parent, registry.strip())
+        cached = True
     manifest = load_manifest(path)
     refreshed = tuple(
         _requirement_for_add(manifest, identity=item.source, local=item.local)
@@ -242,6 +258,7 @@ def update_integrations(project: Path) -> dict[str, Any]:
     write_lockfile(updated, lock)
     return {
         "action": "update",
+        "cache": str(registry_cache_path(path.parent).as_posix()) if cached else "",
         "executed": False,
         "installed": False,
         "integrations": [
@@ -262,6 +279,33 @@ def update_integrations(project: Path) -> dict[str, Any]:
     }
 
 
+def _records(*, project: Path | None, cache: Path | None) -> tuple[Any, ...]:
+    if cache is not None:
+        return overlay_integrations(cache)
+    return integrations_for_project(project)
+
+
+def _write_registry_cache(project: Path, registry: str) -> Path:
+    if registry.lower() in {"pip", "pipx", "uv"}:
+        raise coded_error(
+            "MINT_INTEGRATION",
+            "mint integrations update does not pip, pipx, or execute an integration",
+        )
+    source = Path(registry)
+    if source.is_dir() and not source.is_symlink():
+        source = source / "records" / "v0.json"
+    if source.is_symlink() or not source.is_file():
+        raise coded_error(
+            "MINT_PATH",
+            "pass --registry to a local mint.catalog-records/v0 file or records/v0.json directory",
+        )
+    load_catalog_records(source)
+    destination = registry_cache_path(project)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    return destination
+
+
 def _origin_for(manifest: ProjectManifest, identity: str) -> str:
     for item in manifest.integrations:
         if item.source != identity:
@@ -270,7 +314,12 @@ def _origin_for(manifest: ProjectManifest, identity: str) -> str:
             return "local"
         if item.source == REFERENCE_IDENTITY:
             return "packaged"
-        record = catalog_integration(item.source, item.version, origin="github")
+        record = catalog_integration(
+            item.source,
+            item.version,
+            origin="github",
+            records=integrations_for_project(manifest.directory),
+        )
         if record is not None:
             return "github"
         return "packaged"
@@ -309,7 +358,9 @@ def _requirement_for_add(
             phases=tuple(str(item) for item in packaged["phases"]),
             realization="",
         )
-    record = catalog_integration(chosen, origin="github")
+    record = catalog_integration(
+        chosen, origin="github", records=integrations_for_project(manifest.directory)
+    )
     if record is None or record.github is None:
         raise coded_error(
             "MINT_INTEGRATION",

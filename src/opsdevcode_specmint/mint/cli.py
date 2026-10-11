@@ -535,6 +535,16 @@ def _build_parser() -> argparse.ArgumentParser:
     search_integration.add_argument("query", nargs="?", default="", help="Substring filter")
     search_integration.add_argument("--capability", default="", help="Capability id filter")
     search_integration.add_argument("--target-kind", default="", help="Target kind filter")
+    search_integration.add_argument(
+        "--project",
+        default="",
+        help="Project directory; search uses .mint/catalog-records.json when present",
+    )
+    search_integration.add_argument(
+        "--cache",
+        default="",
+        help="Local mint.catalog-records/v0 overlay; never a URL",
+    )
     inspect_integration = integrations_sub.add_parser("inspect", help="Inspect one integration")
     inspect_integration.add_argument("identity")
     check_integration = integrations_sub.add_parser("check", help="Validate a manifest file")
@@ -569,9 +579,15 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     status_integration.add_argument("--project", required=True)
     update_integration = integrations_sub.add_parser(
-        "update", help="Refresh lockfile pins from packaged or local sources"
+        "update",
+        help="Refresh lockfile pins from packaged, cached, or local sources; never pip",
     )
     update_integration.add_argument("--project", required=True)
+    update_integration.add_argument(
+        "--registry",
+        default="",
+        help="Local mint-registry records/v0.json or directory; copied to .mint cache",
+    )
     conformance = integrations_sub.add_parser("conformance", help="Alias of mint integrations test")
     conformance.add_argument("integration", nargs="?", default="")
     conformance.add_argument(

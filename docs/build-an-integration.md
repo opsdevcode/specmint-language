@@ -71,25 +71,31 @@ Install a public wheel only from the GitHub prerelease, then check
 `SHA256SUMS` against the catalog:
 
 ```
-curl -fsSL -O https://github.com/opsdevcode/mint-integration-local/releases/download/v0.2.0-alpha.1/SHA256SUMS
-curl -fsSL -O https://github.com/opsdevcode/mint-integration-local/releases/download/v0.2.0-alpha.1/mint_integration_local-0.2.0a1-py3-none-any.whl
+curl -fsSL -O https://github.com/opsdevcode/mint-integration-local/releases/download/v0.2.1-alpha.1/SHA256SUMS
+curl -fsSL -O https://github.com/opsdevcode/mint-integration-local/releases/download/v0.2.1-alpha.1/mint_integration_local-0.2.1a1-py3-none-any.whl
 shasum -a 256 -c SHA256SUMS
-pip install ./mint_integration_local-0.2.0a1-py3-none-any.whl
+pip install ./mint_integration_local-0.2.1a1-py3-none-any.whl
 ```
 
 Recorded coordinates:
 
-- `mint-integration-local` `v0.2.0-alpha.1`
-  wheel `sha256:591e1b3ebdd7e4f9373996e0cdeafa62d8fea39d2640ded8270ff2e59c68094d`
+- `mint-integration-local` `v0.2.1-alpha.1`
+  commit `c0fc6e734a2ffbe95508a6cc9183b382d458bcd6`
+  wheel `sha256:1cf952cceb4fec8008b42b5a6e12e1f604d24dec37fcbcb7371dfc7eb3a3a35d`
   manifest `sha256:cde4adf9e5f4c9e0b127cd11e6e977d25857d4a72602702ffe8a57223b05100e`
-- `mint-integration-github` `v0.2.0-alpha.1`
-  wheel `sha256:3c864b4f5e7298a0a2f52d0680cb5c3eb8ea57a8195e7d9ba628fe3b7b6e60da`
+- `mint-integration-github` `v0.3.0-alpha.1`
+  commit `53df7396b03c0af5ddf28255d5003cd61e838e97`
+  wheel `sha256:2307ee7cb58229851b42b02408bb7eb5d9ce3b2878153e6b620a8e54a0c9a0e5`
   manifest `sha256:1b805a915d950c614c99089942252abbe6d846658afa741b28824330feba41f9`
 - `mint-integration-template` `v0.2.0-alpha.1` (not a Python package)
+
+Community records live in `opsdevcode/mint-registry`. Cache a local
+checkout with `mint integrations update --registry PATH`. Search does
+not install.
 
 ## Will not appear here
 
 - `mint apply`
 - live GitHub, cloud, or Marketplace publication
-- a hosted registry
+- a hosted registry service
 - `latest` tags
