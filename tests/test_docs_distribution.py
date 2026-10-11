@@ -112,6 +112,14 @@ def test_canonical_docs_url_is_mint_domain() -> None:
     assert "GitHub Pages for this repository is not enabled" not in index
 
 
+def test_pages_custom_domain_removal_script_does_not_disable_pages() -> None:
+    script = (REPO / "scripts" / "remove_pages_custom_domain.sh").read_text(encoding="utf-8")
+    assert "https_enforced=false" in script
+    assert 'cname=""' in script
+    assert "DELETE" not in script
+    assert "repos/${REPO}/pages" in script
+
+
 def test_pages_workflow_deploys_static_docs() -> None:
     assert "actions/deploy-pages@" in PAGES
     assert "scripts/build_docs_site.py" in PAGES
