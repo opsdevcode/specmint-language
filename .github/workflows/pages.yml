@@ -1,8 +1,10 @@
 name: GitHub Pages
 
-# Smallest public docs host for this repository. Canonical URL:
+# Smallest public docs host for this repository.
+# Canonical URLs in the artifact: https://mint.opsdevco.de/
+# Published host until DNS/CNAME is proven:
 # https://opsdevcode.github.io/specmint-language/
-# mint.opsdevco.de is not used until that host answers anonymous HTTP 200.
+# Do not pass --cname until mint.opsdevco.de answers anonymous HTTP 200.
 
 on:
   push:

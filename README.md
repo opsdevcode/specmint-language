@@ -18,7 +18,9 @@ governed runtime. The hosted SpecMint service stays private.
 There are no live providers or credentials here.
 
 Product page: [opsdevco.de/products/mint](https://opsdevco.de/products/mint)
-Docs: [Mint language documentation](https://opsdevcode.github.io/specmint-language/)
+Docs: [mint.opsdevco.de](https://mint.opsdevco.de/) (canonical). Generated
+fallback until that host answers HTTP 200:
+[GitHub Pages](https://opsdevcode.github.io/specmint-language/).
 
 ## Install
 
