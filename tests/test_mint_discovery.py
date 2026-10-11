@@ -165,7 +165,7 @@ def test_add_github_catalog_identity_binds_recorded_digests(tmp_path: Path) -> N
     assert added["network"] is False
     assert added["origin"] == "github"
     assert added["artifactDigest"] == (
-        "sha256:3c864b4f5e7298a0a2f52d0680cb5c3eb8ea57a8195e7d9ba628fe3b7b6e60da"
+        "sha256:2307ee7cb58229851b42b02408bb7eb5d9ce3b2878153e6b620a8e54a0c9a0e5"
     )
     assert added["manifestDigest"] == (
         "sha256:1b805a915d950c614c99089942252abbe6d846658afa741b28824330feba41f9"
@@ -184,7 +184,8 @@ def test_add_github_catalog_identity_binds_recorded_digests(tmp_path: Path) -> N
     assert inspect_code == 0, inspect_err
     inspected = json.loads(inspect_out)
     assert inspected["catalog"]["origin"] == "github"
-    assert inspected["catalog"]["release"]["tag"] == "v0.2.0-alpha.1"
+    assert inspected["catalog"]["release"]["tag"] == "v0.3.0-alpha.1"
+    assert inspected["catalog"]["release"]["commit"] == ("53df7396b03c0af5ddf28255d5003cd61e838e97")
     assert "pypi.org" not in inspect_out.lower()
 
 
@@ -266,6 +267,110 @@ def test_status_and_update_bind_github_catalog_pins(tmp_path: Path) -> None:
     verified = json.loads(verify_out)
     assert verified["lockUpdated"] is True
     assert verified["integrations"][0]["origin"] == "github"
+
+
+def test_update_caches_local_registry_for_offline_search_add_verify(
+    tmp_path: Path,
+) -> None:
+    project = _project(tmp_path)
+    registry = tmp_path / "mint-registry"
+    records_dir = registry / "records"
+    records_dir.mkdir(parents=True)
+    overlay = {
+        "capabilities": [
+            {
+                "id": "repo.settings",
+                "support": "full",
+                "targetKinds": ["repo.github"],
+                "version": "v1alpha1",
+            }
+        ],
+        "integrations": [
+            {
+                "artifactDigest": "sha256:" + "ab" * 32,
+                "capabilities": [{"id": "repo.settings", "version": "v1alpha1"}],
+                "executionSupport": "fake",
+                "identity": "repo.github.plan",
+                "manifestDigest": "sha256:" + "cd" * 32,
+                "name": "plan",
+                "origin": "github",
+                "phases": ["describe", "evidence", "observe", "plan", "validate", "verify"],
+                "release": {
+                    "artifact": "mint_integration_github-overlay-py3-none-any.whl",
+                    "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "repository": "opsdevcode/mint-integration-github",
+                    "tag": "v9.9.9-alpha.1",
+                    "url": (
+                        "https://github.com/opsdevcode/mint-integration-github/"
+                        "releases/tag/v9.9.9-alpha.1"
+                    ),
+                },
+                "summary": "Overlay cache record from a local mint-registry checkout.",
+                "targetKinds": ["repo.github"],
+                "version": "0.1.0",
+            }
+        ],
+        "schema": "mint.catalog-records/v0",
+        "targetKinds": [
+            {"fields": [["owner", "string"], ["name", "string"]], "kind": "repo.github"}
+        ],
+        "version": "v0",
+    }
+    (records_dir / "v0.json").write_text(json.dumps(overlay), encoding="utf-8")
+    update_code, update_out, update_err = _run(
+        [
+            "integrations",
+            "update",
+            "--project",
+            str(project),
+            "--registry",
+            str(registry),
+        ]
+    )
+    assert update_code == 0, update_err
+    updated = json.loads(update_out)
+    assert updated["network"] is False
+    assert updated["pip"] is False
+    assert updated["executed"] is False
+    cache_path = project / ".mint" / "catalog-records.json"
+    assert cache_path.is_file()
+    search_code, search_out, search_err = _run(
+        ["integrations", "search", "overlay", "--project", str(project)]
+    )
+    assert search_code == 0, search_err
+    searched = json.loads(search_out)
+    assert searched["network"] is False
+    assert searched["cache"] is True
+    assert searched["integrations"][0]["release"]["tag"] == "v9.9.9-alpha.1"
+    add_code, add_out, add_err = _run(
+        ["integrations", "add", "--project", str(project), "repo.github.plan"]
+    )
+    assert add_code == 0, add_err
+    added = json.loads(add_out)
+    assert added["network"] is False
+    assert added["installed"] is False
+    assert added["artifactDigest"] == "sha256:" + "ab" * 32
+    verify_code, verify_out, verify_err = _run(
+        ["integrations", "verify", "--project", str(project)]
+    )
+    assert verify_code == 0, verify_err
+    verified = json.loads(verify_out)
+    assert verified["executed"] is False
+    assert verified["integrations"][0]["artifactDigest"] == added["artifactDigest"]
+    lock_code, _lock_out, lock_err = _run(["lock", "--project", str(project)])
+    assert lock_code == 0, lock_err
+    refused = _run(
+        [
+            "integrations",
+            "update",
+            "--project",
+            str(project),
+            "--registry",
+            "https://github.com/opsdevcode/mint-registry",
+        ]
+    )
+    assert refused[0] == 1
+    assert "refuse network source" in refused[2]
 
 
 def test_verify_fails_on_tampered_digest(tmp_path: Path) -> None:

@@ -624,7 +624,7 @@ def _integration_lock_entries(manifest: ProjectManifest) -> tuple[LockedIntegrat
                 ) from None
             pinned_artifact = _digest_bytes(artifact_file.read_bytes())
         else:
-            github_lock = _github_lock_entry(requirement)
+            github_lock = _github_lock_entry(requirement, directory=manifest.directory)
             if github_lock is not None:
                 pinned.append(github_lock)
                 continue
@@ -666,12 +666,19 @@ def _integration_lock_entries(manifest: ProjectManifest) -> tuple[LockedIntegrat
     return tuple(pinned)
 
 
-def _github_lock_entry(requirement: ProjectIntegration) -> LockedIntegration | None:
-    from opsdevcode_specmint.mint.catalog import catalog_integration
+def _github_lock_entry(
+    requirement: ProjectIntegration, *, directory: Path
+) -> LockedIntegration | None:
+    from opsdevcode_specmint.mint.catalog import catalog_integration, integrations_for_project
 
     if requirement.source == "local.sandbox.ensure_marker":
         return None
-    record = catalog_integration(requirement.source, requirement.version, origin="github")
+    record = catalog_integration(
+        requirement.source,
+        requirement.version,
+        origin="github",
+        records=integrations_for_project(directory),
+    )
     if record is None or record.github is None:
         return None
     if requirement.version != record.version:

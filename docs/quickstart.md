@@ -54,8 +54,10 @@ What each step does:
 Planning does not write a sandbox marker. The integration declares
 `executionSupport: fake` and refuses `execute`. The conformance kit covers
 observation, plan, verification, and evidence. Catalog records are local
-JSON data. There is no hosted registry. Standalone integration wheels
-are GitHub Release assets, not PyPI packages.
+JSON data. There is no hosted registry service. Cache static records
+from `opsdevcode/mint-registry` with
+`mint integrations update --registry PATH`. Standalone integration
+wheels are GitHub Release assets, not PyPI packages.
 
 Discover and pin without network:
 

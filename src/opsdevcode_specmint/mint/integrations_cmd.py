@@ -105,10 +105,14 @@ def run_integrations(args: Any, *, stdout: TextIO, stderr: TextIO) -> int:
         stdout.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
         return 0
     if command == "search":
+        cache_raw = getattr(args, "cache", "") or ""
+        project_raw = getattr(args, "project", "") or ""
         payload = search_integrations(
             query=getattr(args, "query", "") or "",
             capability=getattr(args, "capability", "") or "",
             target_kind=getattr(args, "target_kind", "") or "",
+            cache=Path(cache_raw) if cache_raw else None,
+            project=Path(project_raw) if project_raw else None,
         )
         stdout.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
         return 0
@@ -153,7 +157,10 @@ def run_integrations(args: Any, *, stdout: TextIO, stderr: TextIO) -> int:
         stdout.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
         return 0
     if command == "update":
-        payload = update_integrations(Path(args.project))
+        payload = update_integrations(
+            Path(args.project),
+            registry=getattr(args, "registry", "") or "",
+        )
         stdout.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
         return 0
     if command in {"conformance", "test"}:

@@ -76,7 +76,7 @@
       "version": "0.1.0"
     },
     {
-      "artifactDigest": "sha256:591e1b3ebdd7e4f9373996e0cdeafa62d8fea39d2640ded8270ff2e59c68094d",
+      "artifactDigest": "sha256:1cf952cceb4fec8008b42b5a6e12e1f604d24dec37fcbcb7371dfc7eb3a3a35d",
       "capabilities": [
         {"id": "local.sandbox.ensure_marker", "version": "v1alpha1"}
       ],
@@ -87,17 +87,18 @@
       "origin": "github",
       "phases": ["describe", "evidence", "observe", "plan", "validate", "verify"],
       "release": {
-        "artifact": "mint_integration_local-0.2.0a1-py3-none-any.whl",
+        "artifact": "mint_integration_local-0.2.1a1-py3-none-any.whl",
+        "commit": "c0fc6e734a2ffbe95508a6cc9183b382d458bcd6",
         "repository": "opsdevcode/mint-integration-local",
-        "tag": "v0.2.0-alpha.1",
-        "url": "https://github.com/opsdevcode/mint-integration-local/releases/tag/v0.2.0-alpha.1"
+        "tag": "v0.2.1-alpha.1",
+        "url": "https://github.com/opsdevcode/mint-integration-local/releases/tag/v0.2.1-alpha.1"
       },
       "summary": "GitHub Release wheel for local.sandbox.ensure_marker. Canonical distribution is the prerelease, not PyPI.",
       "targetKinds": ["local.sandbox", "sandbox"],
       "version": "0.1.0"
     },
     {
-      "artifactDigest": "sha256:3c864b4f5e7298a0a2f52d0680cb5c3eb8ea57a8195e7d9ba628fe3b7b6e60da",
+      "artifactDigest": "sha256:2307ee7cb58229851b42b02408bb7eb5d9ce3b2878153e6b620a8e54a0c9a0e5",
       "capabilities": [
         {"id": "repo.settings", "version": "v1alpha1"}
       ],
@@ -108,10 +109,11 @@
       "origin": "github",
       "phases": ["describe", "evidence", "observe", "plan", "validate", "verify"],
       "release": {
-        "artifact": "mint_integration_github-0.2.0a1-py3-none-any.whl",
+        "artifact": "mint_integration_github-0.3.0a1-py3-none-any.whl",
+        "commit": "53df7396b03c0af5ddf28255d5003cd61e838e97",
         "repository": "opsdevcode/mint-integration-github",
-        "tag": "v0.2.0-alpha.1",
-        "url": "https://github.com/opsdevcode/mint-integration-github/releases/tag/v0.2.0-alpha.1"
+        "tag": "v0.3.0-alpha.1",
+        "url": "https://github.com/opsdevcode/mint-integration-github/releases/tag/v0.3.0-alpha.1"
       },
       "summary": "Plan-only GitHub repository settings from a supplied snapshot. Canonical distribution is the GitHub prerelease, not PyPI. Execute is refused.",
       "targetKinds": ["repo.github"],

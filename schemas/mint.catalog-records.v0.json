@@ -45,6 +45,10 @@
             "additionalProperties": false,
             "properties": {
               "artifact": {"type": "string"},
+              "commit": {
+                "pattern": "^[0-9a-f]{40}$",
+                "type": "string"
+              },
               "repository": {"type": "string"},
               "tag": {"type": "string"},
               "url": {"type": "string"}
