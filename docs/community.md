@@ -1,7 +1,9 @@
-# Community governance
+# Community
 
 Mint integrations are authored in public. This extract does not host a
-registry and does not admit Marketplace or Open VSX listings.
+registry service and does not admit Marketplace or Open VSX listings.
+Cache static records from `opsdevcode/mint-registry` with
+`mint integrations update --registry PATH`. Search does not install.
 
 ## What a contribution is
 

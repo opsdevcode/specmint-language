@@ -22,7 +22,8 @@ make format && make quality && make test
 
 ## Documentation
 
-Public docs live under `docs/` and `specification/mint/v0/`. Start with
+Public docs live under `docs/` and `specification/mint/v0/`. The language
+site IA is built by `scripts/build_docs_site.py`. Start with
 [the ten-minute quickstart](docs/quickstart.md).
 
 ## Security

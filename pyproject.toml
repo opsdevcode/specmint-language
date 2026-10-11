@@ -28,7 +28,7 @@ specmint = "opsdevcode_specmint.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/opsdevcode/specmint-language"
-Documentation = "https://opsdevcode.github.io/specmint-language/"
+Documentation = "https://mint.opsdevco.de/"
 Issues = "https://github.com/opsdevcode/specmint-language/issues"
 
 [build-system]
