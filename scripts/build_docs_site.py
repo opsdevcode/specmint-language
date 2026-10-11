@@ -9,7 +9,9 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
+import tempfile
 import tomllib
 from pathlib import Path
 
@@ -17,6 +19,7 @@ CANONICAL_SITE_URL = "https://mint.opsdevco.de/"
 FALLBACK_SITE_URL = "https://opsdevcode.github.io/specmint-language/"
 RELEASES_URL = "https://github.com/opsdevcode/specmint-language/releases"
 PRODUCT_URL = "https://opsdevco.de/products/mint"
+MAX_TAG_SNAPSHOTS = 12
 
 _HEADING = re.compile(r"^(#{1,6})\s+(.*)$")
 _FENCE = re.compile(r"^```(\w+)?\s*$")
@@ -270,7 +273,10 @@ def markdown_to_html(
 
 
 def _software_version(repo: Path) -> str:
-    data = tomllib.loads((repo / "pyproject.toml").read_text(encoding="utf-8"))
+    pyproject = repo / "pyproject.toml"
+    if not pyproject.is_file():
+        return "unknown"
+    data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
     return str(data["project"]["version"])
 
 
@@ -490,7 +496,97 @@ def _write_404(out: Path) -> None:
     )
 
 
-def build_docs_site(repo: Path, out: Path, *, emit_cname: bool = False) -> None:
+def _list_version_tags(repo: Path) -> list[str]:
+    proc = subprocess.run(
+        ["git", "tag", "-l", "v0.*"],
+        cwd=repo,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        return []
+    tags = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
+    return sorted(tags)[-MAX_TAG_SNAPSHOTS:]
+
+
+def _write_versions_index(out: Path, *, tags: list[str]) -> None:
+    items = [
+        '<li><a href="../specification/mint/v0/language.html">'
+        "Language specification mint/v0</a></li>"
+    ]
+    items.extend(
+        f'<li><a href="{html.escape(tag, quote=True)}/index.html">'
+        f"{html.escape(tag)}</a></li>"
+        for tag in tags
+    )
+    fallback = html.escape(FALLBACK_SITE_URL, quote=True)
+    body = (
+        "<h1>Versioned Mint docs</h1>\n"
+        "<p>Language spec versions live in-tree. Git tags snapshot docs under "
+        "<code>/versions/&lt;tag&gt;/</code>. CLI releases remain on GitHub "
+        "Releases. This site does not embed a second compiler or analytics.</p>\n"
+        "<ul>\n" + "\n".join(items) + "\n</ul>\n"
+        f'<p><a href="{html.escape(RELEASES_URL, quote=True)}">GitHub Releases</a> · '
+        f'<a href="{fallback}">GitHub Pages fallback</a></p>\n'
+    )
+    dest = out / "versions" / "index.html"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(
+        page_html(
+            title="Versioned Mint docs",
+            canonical=f"{CANONICAL_SITE_URL}versions/",
+            description="Versioned Mint language documentation snapshots.",
+            body=body,
+            output_file=dest,
+        ),
+        encoding="utf-8",
+    )
+
+
+def _snapshot_tag(repo: Path, tag: str, dest: Path) -> bool:
+    archive = subprocess.run(
+        [
+            "git",
+            "archive",
+            tag,
+            "docs",
+            "specification",
+            "SECURITY.md",
+            "CONTRIBUTING.md",
+            "pyproject.toml",
+        ],
+        cwd=repo,
+        capture_output=True,
+        check=False,
+    )
+    if archive.returncode != 0 or not archive.stdout:
+        return False
+    tmp = Path(tempfile.mkdtemp(prefix="mint-docs-"))
+    try:
+        extract = subprocess.run(
+            ["tar", "-x"],
+            cwd=tmp,
+            input=archive.stdout,
+            check=False,
+        )
+        if extract.returncode != 0:
+            return False
+        if not (tmp / "docs" / "index.md").is_file():
+            return False
+        build_docs_site(tmp, dest, emit_cname=False, include_tag_snapshots=False)
+        return True
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def build_docs_site(
+    repo: Path,
+    out: Path,
+    *,
+    emit_cname: bool = False,
+    include_tag_snapshots: bool = False,
+) -> None:
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
@@ -501,6 +597,8 @@ def build_docs_site(repo: Path, out: Path, *, emit_cname: bool = False) -> None:
 
     roots = (repo / "docs", repo / "specification")
     for root in roots:
+        if not root.is_dir():
+            continue
         for path in root.rglob("*"):
             if not path.is_file():
                 continue
@@ -520,12 +618,16 @@ def build_docs_site(repo: Path, out: Path, *, emit_cname: bool = False) -> None:
                 shutil.copy2(path, dest)
 
     for extra in (repo / "SECURITY.md", repo / "CONTRIBUTING.md"):
+        if not extra.is_file():
+            continue
         dest = out / _html_name(Path(extra.name))
         canonical = CANONICAL_SITE_URL + dest.name
         _write_markdown_page(extra, dest, repo=repo, canonical=canonical)
 
     for route, source_rel in PUBLIC_ROUTES:
         source = repo / source_rel
+        if not source.is_file():
+            continue
         dest = out / _route_file(route)
         extra_ld = json_ld if route == "" else None
         _write_markdown_page(
@@ -543,6 +645,13 @@ def build_docs_site(repo: Path, out: Path, *, emit_cname: bool = False) -> None:
     _write_sitemap(out)
     _write_404(out)
 
+    tags: list[str] = []
+    if include_tag_snapshots:
+        for tag in _list_version_tags(repo):
+            if _snapshot_tag(repo, tag, out / "versions" / tag):
+                tags.append(tag)
+    _write_versions_index(out, tags=tags)
+
     if emit_cname:
         shutil.copy2(repo / "docs" / "site" / "CNAME", out / "CNAME")
 
@@ -556,8 +665,18 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Copy docs/site/CNAME into the artifact (only after mint.opsdevco.de returns 200)",
     )
+    parser.add_argument(
+        "--include-tag-snapshots",
+        action="store_true",
+        help="Copy docs from recent v0.* git tags into /versions/<tag>/",
+    )
     args = parser.parse_args(argv)
-    build_docs_site(args.repo.resolve(), args.out.resolve(), emit_cname=args.cname)
+    build_docs_site(
+        args.repo.resolve(),
+        args.out.resolve(),
+        emit_cname=args.cname,
+        include_tag_snapshots=args.include_tag_snapshots,
+    )
     return 0
 
 
