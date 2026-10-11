@@ -117,10 +117,16 @@ def test_pages_workflow_deploys_static_docs() -> None:
     assert "scripts/build_docs_site.py" in PAGES
     assert "build_docs_site.py --cname" not in PAGES
     assert "build_docs_site.py --out site --cname" not in PAGES
+    assert "--include-tag-snapshots" in PAGES
+    assert "pull_request:" in PAGES
+    assert "mint-docs-site" in PAGES
     assert "Pages disabled at org" not in PAGES
     assert "skip:" not in PAGES
     assert ":latest" not in PAGES
     assert "tag: latest" not in PAGES
+    assert "/releases/latest" not in PAGES
+    assert "umami" not in PAGES.lower()
+    assert "gtm" not in PAGES.lower()
     for line in PAGES.splitlines():
         stripped = line.strip()
         if not stripped.startswith("uses:"):
@@ -149,6 +155,12 @@ def test_docs_site_builds_public_routes(tmp_path: Path) -> None:
     assert "mint apply" in index
     assert "Marketplace" not in index or "deferred" in index.lower() or "not" in index.lower()
     assert not (out / "CNAME").exists()
+    assert (out / "versions" / "index.html").is_file()
+    versions = (out / "versions" / "index.html").read_text(encoding="utf-8")
+    assert "specification/mint/v0/language.html" in versions
+    assert FALLBACK_SITE_URL in versions
+    assert "umami" not in index.lower()
+    assert "/releases/latest" not in index
     for route in PUBLIC_ROUTE_DIRS:
         page = out / route / "index.html" if route else out / "index.html"
         assert page.is_file(), route
