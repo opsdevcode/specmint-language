@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.10.0-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.9.0-alpha.2...v0.10.0-alpha.2) (2026-10-11)
+
+
+### Features
+
+* **docs:** publish mint.opsdevco.de language site IA ([#37](https://github.com/opsdevcode/specmint-language/issues/37)) ([c6717da](https://github.com/opsdevcode/specmint-language/commit/c6717da3421a774a392186769f7dfe2dcc78d1db))
+* prepare mint.opsdevco.de GitHub Pages host ([#38](https://github.com/opsdevcode/specmint-language/issues/38)) ([e145e09](https://github.com/opsdevcode/specmint-language/commit/e145e0912bd6cac923c0fd752e73f60ef50f1781))
+
+
+### Bug Fixes
+
+* **docs:** make quickstart code regions keyboard accessible ([#40](https://github.com/opsdevcode/specmint-language/issues/40)) ([ed63cf8](https://github.com/opsdevcode/specmint-language/commit/ed63cf80e8f81b5fd84669251bb826bb08aad647))
+
 ## [0.9.0-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.8.0-alpha.2...v0.9.0-alpha.2) (2026-10-11)
 
 
