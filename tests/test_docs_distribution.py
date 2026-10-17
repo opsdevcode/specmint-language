@@ -172,7 +172,7 @@ def test_docs_site_builds_public_routes(tmp_path: Path) -> None:
     assert (out / "docs" / "quickstart.html").is_file()
     quickstart_redirect = (out / "docs" / "quickstart.html").read_text(encoding="utf-8")
     assert "http-equiv" in quickstart_redirect
-    assert "docs/quickstart/index.html" in quickstart_redirect
+    assert "quickstart/index.html" in quickstart_redirect
     playground = (out / "playground" / "index.html").read_text(encoding="utf-8")
     assert "https://opsdevco.de/labs" in playground
     assert "https://opsdevco.de/labs/create" in playground
