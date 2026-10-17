@@ -13,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import tomllib
+from contextvars import ContextVar
 from pathlib import Path
 
 CANONICAL_SITE_URL = "https://mint.opsdevco.de/"
@@ -82,8 +83,17 @@ def _route_file(route: str) -> Path:
     return Path(route) / "index.html" if route else Path("index.html")
 
 
+# Site-relative targets must not resolve against the process cwd. Docker
+# builds with WORKDIR /src otherwise emit nav links like ../src/index.html.
+_SITE_ROOT: ContextVar[Path | None] = ContextVar("mint_site_root", default=None)
+
+
 def _relpath(from_file: Path, to_file: Path) -> str:
-    return Path(os.path.relpath(to_file, start=from_file.parent)).as_posix()
+    start = from_file.parent.resolve()
+    root = _SITE_ROOT.get()
+    if root is not None and not to_file.is_absolute():
+        to_file = (root / to_file).resolve()
+    return Path(os.path.relpath(to_file, start=start)).as_posix()
 
 
 def _canonical(route: str) -> str:
@@ -593,6 +603,20 @@ def build_docs_site(
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
+    token = _SITE_ROOT.set(out.resolve())
+    try:
+        _build_docs_site(repo, out, emit_cname=emit_cname, include_tag_snapshots=include_tag_snapshots)
+    finally:
+        _SITE_ROOT.reset(token)
+
+
+def _build_docs_site(
+    repo: Path,
+    out: Path,
+    *,
+    emit_cname: bool = False,
+    include_tag_snapshots: bool = False,
+) -> None:
     (out / ".nojekyll").write_text("", encoding="utf-8")
     json_ld = _json_ld(repo)
 
