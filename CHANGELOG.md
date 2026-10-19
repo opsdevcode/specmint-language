@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.11.0-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.10.0-alpha.2...v0.11.0-alpha.2) (2026-10-17)
+
+
+### Features
+
+* **docs:** publish mint static site image for kubernetes ([#41](https://github.com/opsdevcode/specmint-language/issues/41)) ([2ccd752](https://github.com/opsdevcode/specmint-language/commit/2ccd75223fbc743c81f664bef4ebc7a093b2aab5))
+
+
+### Bug Fixes
+
+* **docs:** keep site links on the output tree ([#44](https://github.com/opsdevcode/specmint-language/issues/44)) ([1cb883c](https://github.com/opsdevcode/specmint-language/commit/1cb883ce92591c830f92a659e43b844f0238fcdb))
+
 ## [0.10.0-alpha.2](https://github.com/opsdevcode/specmint-language/compare/v0.9.0-alpha.2...v0.10.0-alpha.2) (2026-10-11)
 
 
